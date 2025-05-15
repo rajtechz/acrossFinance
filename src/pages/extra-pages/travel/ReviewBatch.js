@@ -175,7 +175,6 @@ const ReviewBatch = () => {
       formData.append("PDF", rowData?.invoice || "");
       formData.append("InvoiceStatus", rowData?.invoiceStatus || "");
       formData.append("FinanceStatus", rowData?.financeStatus || "Validated");
-
       // If you want to pass other keys too (like customerName, imeiNo, etc.)
       formData.append("CustomerName", rowData?.customerName || "");
       formData.append("IMEINo", rowData?.imeiNo || "");
@@ -373,6 +372,11 @@ const ReviewBatch = () => {
     { name: "GST", selector: (row) => row.gst || "--", width: "150px" },
     // { name: "TDS", selector: (row) => row.tds || "--", width: "150px" },
     { name: "Payable", selector: (row) => row.finalAmount, width: "150px" },
+    {
+      name: "RepairCharges",
+      selector: (row) => row.totalRepairCharges,
+      width: "150px",
+    },
     {
       name: "PDF",
       selector: (row) => row.invoice,
@@ -798,7 +802,13 @@ const ReviewBatch = () => {
           <div style={{ padding: "24px" }}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <strong>Vendor Name- <span style={{color:"green"}}> {selectedRow?.vendorName}</span></strong>
+                <strong>
+                  Vendor Name-{" "}
+                  <span style={{ color: "green" }}>
+                    {" "}
+                    {selectedRow?.vendorName}
+                  </span>
+                </strong>
                 <span
                   style={{
                     background: "#F5F5F5",
@@ -811,8 +821,6 @@ const ReviewBatch = () => {
                   Batch No- <strong>{selectedRow?.batchNo}</strong>
                 </span>
               </Grid>
-
-            
 
               {/* <Grid item xs={6}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -953,8 +961,8 @@ const ReviewBatch = () => {
             variant="outlined"
             style={{
               borderColor: "#7E00D1",
-backgroundColor:"#fff",
-color:"black",
+              backgroundColor: "#fff",
+              color: "black",
               marginBottom: "16px",
               width: "20%",
             }}
