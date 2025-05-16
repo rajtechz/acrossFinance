@@ -29,11 +29,9 @@ import dayjs from "dayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-
 function FinalPayment() {
   const [showFinalTable, setShowFinalTable] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
-
   const [paymentData, setPaymentData] = useState({
     paymentDate: "", // Will be set via DatePicker
     paymentMode: "",
@@ -397,6 +395,78 @@ function FinalPayment() {
     }
   };
 
+  const handleScheduledPaymentSubmit = async () => {
+    const selectedData = selectedRows.filter((row) => row.selected);
+
+    if (selectedData.length === 0) {
+      alert("Please select at least one row.");
+      return;
+    }
+
+    try {
+      for (const row of selectedData) {
+        const payload = {
+          scheduledId: row.aaNo || "123456",
+          aaNo: row.aaNo || "",
+          imeiNo: row.imeiNo || "",
+          creationDate: row.creationDate || "",
+          closureDate: row.closureDate || "",
+          customerName: row.customerName || "",
+          serviceType: row.serviceType || "",
+          brand: row.brand || "",
+          makeModel: row.makeModel || "",
+          repairCharges: row.repairCharges || "",
+          chargesInclGST: row.chargesInclGST || "",
+          total: row.total || "",
+          invoiceStatus: row.invoiceStatus || "",
+          batchNo: row.batchNo || "",
+          selectedService: row.selectedService || "",
+          totalRepairCharges: row.totalRepairCharges || "",
+          grossAmount: row.grossAmount || "0",
+          finalAmount: row.finalAmount || "0",
+          gst: row.gst || "",
+          invoiceNo: row.invoiceNo || "",
+          invoiceDate: row.invoiceDate || "",
+          invoiceAmount: row.invoiceAmount || "",
+          invoice: row.invoice || "",
+          vendorName: row.vendorName || "",
+          caseCount: Number(row.caseCount || 0),
+          financeStatus: row.financeStatus || "",
+          paymentDate:
+            paymentData.paymentDate || new Date().toISOString().split("T")[0],
+          paymentType: paymentData.paymentMode || "Online",
+          gstStatus: paymentData.gst || "",
+          paymentMode: paymentData.paymentMethod || "Reimbursement",
+          totalAmount: row.payable || "0",
+        };
+
+        const response = await fetch(
+          "https://mintflix.live:8086/api/Auto/InsertScheduledPaymentData",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        const result = await response.json();
+        console.log(`Response for batch ${row.batchNo}:`, result);
+
+        if (!response.ok) {
+          alert(`Failed to submit batch ${row.batchNo}`);
+          return;
+        }
+      }
+
+      alert("Scheduled payment data submitted successfully.");
+    } catch (error) {
+      console.error("Submission Error:", error);
+      alert("Something went wrong while submitting payment data.");
+    }
+  };
+
   return (
     <div style={{ padding: 24 }}>
       <Typography
@@ -549,12 +619,20 @@ function FinalPayment() {
         >
           Cancel
         </Button>
-        <Button
+        {/* <Button
           onClick={handleSubmit}
           variant="contained"
           sx={{ backgroundColor: "#7E00D1", color: "#fff" }}
         >
-          Submit
+          Submitdd
+        </Button> */}
+
+        <Button
+          variant="contained"
+          sx={{ backgroundColor: "#2e7d32", color: "#fff", px: 4 }}
+          onClick={handleScheduledPaymentSubmit}
+        >
+          Submit Scheduled Payment
         </Button>
       </Box>
 

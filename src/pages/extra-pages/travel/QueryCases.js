@@ -614,7 +614,7 @@ const QueryCases = () => {
           </Table>
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
             <Button variant="outlined">
-              Total Amount :{selectedRow?.total}
+              Total Amount :{selectedRow?.finalAmount}
             </Button>
           </Box>
         </DialogContent>
