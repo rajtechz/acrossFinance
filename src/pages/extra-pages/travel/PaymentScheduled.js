@@ -13,8 +13,15 @@ import {
   Select,
   MenuItem,
   Chip,
+  Table,
+  TableHead,
+  TableCell,
+  TableRow,
+  TableBody,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+
 import ExpandCircleDownRoundedIcon from "@mui/icons-material/ExpandCircleDownRounded";
 import VerticalAlignBottomIcon from "@mui/icons-material/VerticalAlignBottom";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -40,6 +47,7 @@ import {
   InputLabel,
 } from "../../../../node_modules/@mui/material/index";
 import PaymeScheduleHook from "./PaymentScheduleHook";
+import { useNavigate } from "../../../../node_modules/react-router-dom/dist/index";
 const PaymentScheduled = () => {
   const [status, setStatus] = useState("");
   const [batches, setBatches] = useState(["Batch 1", "Batch 2", "Batch 3"]);
@@ -50,6 +58,11 @@ const PaymentScheduled = () => {
   const handleChange = (event) => {
     setStatus(event.target.value);
   };
+
+  //   const handleRowClick = (row) => {
+  //   setSelectedRow(row);
+  //   setOpenBox(true);
+  // };
 
   const {
     data,
@@ -250,7 +263,6 @@ const PaymentScheduled = () => {
       name: "Invoice Status",
       cell: (row, index) => (
         <div>
-         
           <Chip
             label={row.invoiceStatus || "Approved"}
             color="primary"
@@ -396,6 +408,29 @@ const PaymentScheduled = () => {
     }));
   };
 
+  const navigate = useNavigate();
+
+  const customerNames = selectedRow?.customerName?.split(",") || [];
+  const aaNos = selectedRow?.aaNo?.split(",") || [];
+  const imeis = selectedRow?.imeiNo?.split(",") || [];
+  const serviceTypes = selectedRow?.serviceType?.split(",") || [];
+  const brands = selectedRow?.brand?.split(",") || [];
+  const models = selectedRow?.makeModel?.split(",") || [];
+  const repairs = selectedRow?.repairCharges?.split(",") || [];
+  const gstCharges = selectedRow?.chargesInclGST?.split(",") || [];
+  const grossAmount = selectedRow?.grossAmount?.split(",") || [];
+  const maxLength = Math.max(
+    customerNames.length,
+    aaNos.length,
+    imeis.length,
+    serviceTypes.length,
+    brands.length,
+    models.length,
+    repairs.length,
+    gstCharges.length,
+    grossAmount.length
+  );
+
   return (
     <>
       <ToastContainer />
@@ -463,7 +498,7 @@ const PaymentScheduled = () => {
               }}
             />
           </Grid>
-      
+
           <Grid
             item
             xs={12}
@@ -523,7 +558,90 @@ const PaymentScheduled = () => {
         )}
       </div>
 
-      
+      <Dialog
+        open={openBox}
+        onClose={handleCloseDialog}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle
+          sx={{
+            fontSize: "24px",
+            fontWeight: "bold",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          {selectedRow?.batchNo ? `Batch No: ${selectedRow.batchNo}` : ""}
+          <a
+            href={selectedRow?.invoice}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none" }}
+          >
+            <PictureAsPdfIcon
+              sx={{ color: "red", fontSize: "28px", cursor: "pointer" }}
+            />
+          </a>
+        </DialogTitle>
+        <DialogContent>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>View</TableCell>
+                <TableCell>Customer Name</TableCell>
+                {/* <TableCell>AA No</TableCell> */}
+                <TableCell>IMEI No</TableCell>
+                <TableCell>Service Type</TableCell>
+                <TableCell>Brand</TableCell>
+                <TableCell>Model</TableCell>
+                <TableCell>Repair Charges</TableCell>
+                <TableCell>GST Charges</TableCell>
+                <TableCell>GrossAmount</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {[...Array(maxLength)].map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <RemoveRedEyeIcon
+                      style={{ cursor: "pointer", color: "#7E00D1" }}
+                      onClick={() =>
+                        navigate("/allDetails", {
+                          state: { aaNumber: aaNos[index] },
+                        })
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>{customerNames[index] || "-"}</TableCell>
+                  {/* <TableCell>{aaNos[index] || "-"}</TableCell> */}
+                  <TableCell>{imeis[index] || "-"}</TableCell>
+                  <TableCell>{serviceTypes[index] || "-"}</TableCell>
+                  <TableCell>{brands[index] || "-"}</TableCell>
+                  <TableCell>{models[index] || "-"}</TableCell>
+                  <TableCell>{repairs[index] || "-"}</TableCell>
+                  <TableCell>{gstCharges[index] || "-"}</TableCell>
+                  <TableCell>{grossAmount[index] || "-"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
+            <Button variant="outlined">
+              Total Amount :{selectedRow?.finalAmount}
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseDialog}
+            style={{ backgroundColor: "#FE7C0B", color: "#fff" }}
+          >
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

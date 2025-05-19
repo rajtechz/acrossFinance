@@ -9,7 +9,7 @@ const PaymeScheduleHook = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [invoiceFile, setInvoiceFile] = useState(null);
   const [openBox, setOpenBox] = useState(false);
-const navigate = useNavigate();
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -28,9 +28,12 @@ const navigate = useNavigate();
   }, []);
 
   const handleRowClick = (row) => {
+    // setSelectedRow(row);
+    // setOpenBox(true);
+    // navigate("/allDetails");
+
     setSelectedRow(row);
     setOpenBox(true);
-    navigate("/allDetails");
   };
 
   const handleCloseDialog = () => {

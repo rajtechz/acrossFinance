@@ -54,6 +54,7 @@ function FinalPayment() {
   const [maxLength, setMaxLength] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFutureDate, setIsFutureDate] = useState(false);
 
   const [paymentData, setPaymentData] = useState({
     paymentDate: "",
@@ -74,7 +75,6 @@ function FinalPayment() {
 
     const parseField = (field) =>
       field ? field.split(",").map((s) => s.trim()) : [];
-
     const cNames = parseField(row.customerName);
     const imeiList = parseField(row.imeiNo);
     const stypes = parseField(row.serviceType);
@@ -84,7 +84,6 @@ function FinalPayment() {
     const gstList = parseField(row.chargesInclGST);
     const gAmount = parseField(row.total);
     const aaList = parseField(row.aaNo);
-
     const max = Math.max(
       cNames.length,
       imeiList.length,
@@ -95,9 +94,7 @@ function FinalPayment() {
       gstList.length,
       gAmount.length
     );
-
     const totalAmt = gAmount.reduce((acc, val) => acc + Number(val || 0), 0);
-
     setCustomerNames(cNames);
     setImeis(imeiList);
     setServiceTypes(stypes);
@@ -383,7 +380,6 @@ function FinalPayment() {
           paymentMode: paymentData.paymentMethod || "Reimbursement",
           totalAmount: sanitizeNumber(row.payable || row.payableAmount),
         };
-
         const response = await fetch(
           "https://mintflix.live:8086/api/Auto/InsertScheduledPaymentData",
           {
@@ -394,16 +390,13 @@ function FinalPayment() {
             body: JSON.stringify(payload),
           }
         );
-
         const result = await response.json();
         console.log(`✅ Response for batch ${row.batchNo}:`, result);
-
         if (!response.ok) {
           alert(`❌ Failed to submit batch ${row.batchNo}`);
           return;
         }
       }
-
       alert("✅ All scheduled payment data submitted successfully.");
       setSelectedRows([]);
       setShowFinalTable(false);
@@ -423,12 +416,167 @@ function FinalPayment() {
     }
   };
 
+  //  const handleScheduledPaymentSubmit = async () => {
+  //   const selectedData = selectedRows.filter((row) => row.selected);
+  //   if (selectedData.length === 0) {
+  //     alert("Please select at least one row to submit.");
+  //     return;
+  //   }
+  //   try {
+  //     setIsSubmitting(true);
+
+  //     const sanitizeNumber = (value) => {
+  //       if (!value) return "0.00";
+  //       if (typeof value === "number") return value.toFixed(2);
+  //       if (typeof value === "string") {
+  //         return value
+  //           .split(",")
+  //           .map((v) => parseFloat(v.trim()) || 0)
+  //           .reduce((acc, val) => acc + val, 0)
+  //           .toFixed(2);
+  //       }
+  //       return "0.00";
+  //     };
+
+  //     const selectedDate = dayjs(paymentData.paymentDate).startOf("day");
+  //     const today = dayjs().startOf("day");
+  //     if (selectedDate.isAfter(today)) {
+  //       // 🔁 FUTURE DATE — Use InsertFullAndPartialPayment
+  //       const payload = {
+  //         scheduledId: selectedData.map((r) => r.batchNo).join(","),
+  //         aaNo: "",
+  //         imeiNo: selectedData[0].imeiNo || "",
+  //         creationDate: selectedData[0].creationDate || "",
+  //         closureDate: selectedData[0].closureDate || "",
+  //         customerName: selectedData[0].customerName || "",
+  //         serviceType: selectedData[0].serviceType || "",
+  //         brand: selectedData[0].brand || "",
+  //         makeModel: selectedData[0].makeModel || "",
+  //         repairCharges: selectedData[0].repairCharges || "",
+  //         chargesInclGST: selectedData[0].chargesInclGST || "",
+  //         total: selectedData[0].total || "",
+  //         invoiceStatus: selectedData[0].invoiceStatus || "",
+  //         batchNo: "",
+  //         selectedService: "",
+  //         reimbursment: "",
+  //         totalRepairCharges: "",
+  //         grossAmount: "",
+  //         finalAmount: selectedData[0].finalAmount || "",
+  //         gst: "18",
+  //         tds: selectedData[0].tds || "2",
+  //         invoiceNo: selectedData[0].invoiceNo || "",
+  //         invoiceDate: selectedData[0].invoiceDate || "",
+  //         invoiceAmount: selectedData[0].invoiceAmount || "",
+  //         invoice: selectedData[0].invoice || "",
+  //         vendorName: selectedData[0].vendorName || "",
+  //         caseCount: Number(selectedData[0].caseCount || 0),
+  //         financeStatus: "",
+  //         paymentDate: paymentData.paymentDate || dayjs().format("YYYY-MM-DD"),
+  //         paymentType: paymentData.paymentMode || "",
+  //         gstStatus: paymentData.gst || "",
+  //         paymentMode: paymentData.paymentMethod || "",
+  //         totalAmount: paymentData.totalPayable,
+  //         totalPartialPaidAmount: paymentData.partialAmount,
+  //         partialPaidAmount: "",
+  //       };
+  //       console.log("➡️ Future Payment Payload:", payload);
+  //       const response = await fetch(
+  //         "https://mintflix.live:8086/api/Auto/InsertFullAndPartialPayment",
+  //         {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify(payload),
+  //         }
+  //       );
+
+  //       const result = await response.json();
+  //       if (!response.ok) throw new Error(result.message);
+
+  //       alert("✅ Future payment submitted successfully.");
+  //     } else {
+  //       // 🔁 TODAY DATE — Use InsertScheduledPaymentData
+  //       for (const row of selectedData) {
+  //         const payload = {
+  //           scheduledId: row.scheduledId || row.batchNo || "N/A",
+  //           aaNo: row.aaNo || "",
+  //           imeiNo: row.imeiNo || "",
+  //           creationDate: row.creationDate || "",
+  //           closureDate: row.closureDate || "",
+  //           customerName: row.customerName || "",
+  //           serviceType: row.serviceType || "",
+  //           brand: row.brand || "",
+  //           makeModel: row.makeModel || "",
+  //           repairCharges: sanitizeNumber(row.repairCharges),
+  //           chargesInclGST: sanitizeNumber(row.chargesInclGST),
+  //           total: sanitizeNumber(row.total),
+  //           invoiceStatus: row.invoiceStatus || "",
+  //           batchNo: row.batchNo || "",
+  //           selectedService: row.selectedService || "",
+  //           reimbursment: sanitizeNumber(row.reimbursment),
+  //           totalRepairCharges: sanitizeNumber(row.totalRepairCharges),
+  //           grossAmount: sanitizeNumber(row.grossAmount),
+  //           finalAmount: sanitizeNumber(row.finalAmount),
+  //           gst: "18",
+  //           tds: sanitizeNumber(row.tds),
+  //           invoiceNo: row.invoiceNo || "",
+  //           invoiceDate: row.invoiceDate || "",
+  //           invoiceAmount: sanitizeNumber(row.invoiceAmount),
+  //           invoice: row.invoice || "",
+  //           vendorName: row.vendorName || "",
+  //           caseCount: Number(row.caseCount || 0),
+  //           financeStatus: row.financeStatus || "",
+  //           paymentDate: paymentData.paymentDate || dayjs().format("YYYY-MM-DD"),
+  //           paymentType: paymentData.paymentMode || "Online",
+  //           gstStatus: paymentData.gst || "",
+  //           paymentMode: paymentData.paymentMethod || "Reimbursement",
+  //           totalAmount: sanitizeNumber(row.payable || row.payableAmount),
+  //         };
+
+  //         console.log("➡️ Today's Payment Payload:", payload);
+
+  //         const response = await fetch(
+  //           "https://mintflix.live:8086/api/Auto/InsertScheduledPaymentData",
+  //           {
+  //             method: "POST",
+  //             headers: {
+  //               "Content-Type": "application/json",
+  //             },
+  //             body: JSON.stringify(payload),
+  //           }
+  //         );
+
+  //         const result = await response.json();
+  //         if (!response.ok) throw new Error(result.message);
+  //       }
+
+  //       alert("✅ Today's payments submitted successfully.");
+  //     }
+
+  //     // ✅ Reset UI state
+  //     setSelectedRows([]);
+  //     setShowFinalTable(false);
+  //     setPaymentData({
+  //       paymentDate: "",
+  //       paymentMode: "",
+  //       gst: "",
+  //       paymentMethod: "",
+  //       partialAmount: 0,
+  //       totalPayable: 0,
+  //     });
+  //   } catch (error) {
+  //     console.error("❌ Submission Error:", error);
+  //     alert("❌ Submission failed.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
   const totalPayableAmount = selectedRows
     .filter((row) => row.selected)
     .reduce((acc, curr) => acc + Number(curr.payableAmount || 0), 0);
-
   const selectedData = selectedRows.filter((row) => row.selected);
-
   return (
     <div style={{ padding: 24 }}>
       <Typography
@@ -473,28 +621,6 @@ function FinalPayment() {
         <Grid item xs={12} sm={6} md={3}>
           <FormControl fullWidth size="small">
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              {/* <DatePicker
-                label="Select Payment Date"
-                format="DD-MM-YYYY"
-                value={
-                  paymentData.paymentDate
-                    ? dayjs(paymentData.paymentDate)
-                    : null
-                }
-                minDate={dayjs()}
-                onChange={(newValue) => {
-                  setPaymentData((prev) => ({
-                    ...prev,
-                    paymentDate: dayjs(newValue).format("YYYY-MM-DD"),
-                  }));
-                }}
-                slotProps={{
-                  textField: {
-                    size: "small",
-                  },
-                }}
-              /> */}
-
               <DatePicker
                 label="Select Payment Date"
                 format="DD-MM-YYYY"
@@ -504,21 +630,33 @@ function FinalPayment() {
                     : null
                 }
                 minDate={dayjs()}
+                // onChange={(newValue) => {
+                //   const selected = dayjs(newValue).startOf("day");
+                //   const today = dayjs().startOf("day");
+
+                //   setPaymentData((prev) => ({
+                //     ...prev,
+                //     paymentDate: selected.format("YYYY-MM-DD"),
+                //   }));
+
+                //   // 🔽 Show final table only if selected date is in the future
+                //   if (selected.isAfter(today)) {
+                //     setShowFinalTable(true);
+                //   } else {
+                //     setShowFinalTable(false);
+                //   }
+                // }}
+
                 onChange={(newValue) => {
                   const selected = dayjs(newValue).startOf("day");
                   const today = dayjs().startOf("day");
-
                   setPaymentData((prev) => ({
                     ...prev,
                     paymentDate: selected.format("YYYY-MM-DD"),
                   }));
-
-                  // 🔽 Show final table only if selected date is in the future
-                  if (selected.isAfter(today)) {
-                    setShowFinalTable(true);
-                  } else {
-                    setShowFinalTable(false);
-                  }
+                  const isFuture = selected.isAfter(today);
+                  setShowFinalTable(isFuture);
+                  setIsFutureDate(isFuture);
                 }}
                 slotProps={{
                   textField: {
@@ -677,7 +815,7 @@ function FinalPayment() {
           </Grid>
 
           <Box display="flex" justifyContent="center" mt={4}>
-            <Button
+            {/* <Button
               variant="contained"
               sx={{ backgroundColor: "#7E00D1", color: "#fff", px: 4 }}
               onClick={() => {
@@ -686,6 +824,15 @@ function FinalPayment() {
               }}
             >
               Payment
+            </Button> */}
+
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: "#7E00D1", color: "#fff", px: 4 }}
+              onClick={handleScheduledPaymentSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Payment"}
             </Button>
           </Box>
         </>

@@ -448,7 +448,7 @@ const PartialPayment = () => {
             justifyContent: "space-between",
           }}
         >
-          <h5 className="mb-0">Review Batches</h5>
+          <h5 className="mb-0">Partial Payment</h5>
 
           <div></div>
         </Box>

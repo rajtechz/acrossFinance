@@ -35,7 +35,7 @@ const Header = ({ open, handleDrawerToggle }) => {
         sx={{
           color: "text.primary",
           bgcolor: open ? iconBackColorOpen : iconBackColor,
-          ml: { xs: 0, lg: -2 },
+          ml: "250px",
         }}
       >
         {!open ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -44,7 +44,6 @@ const Header = ({ open, handleDrawerToggle }) => {
     </Toolbar>
   );
 
-  // app-bar params
   const appBar = {
     position: "fixed",
     color: "inherit",

@@ -1,6 +1,6 @@
-// material-ui
-import { Box, useMediaQuery } from '@mui/material';
-// import { GithubOutlined } from '@ant-design/icons';
+import { Box, useMediaQuery, IconButton } from '@mui/material';
+import { GithubOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom'; // Or 'next/link' if using Next.js
 
 // project import
 import Search from './Search';
@@ -25,7 +25,8 @@ const HeaderContent = () => {
         disableRipple
         color="secondary"
         title="Download Free Version"
-        sx={{ color: 'text.primary', bgcolor: 'grey.100' }}
+        
+        sx={{ color: 'text.primary', bgcolor: 'grey.100',marginLeft:"300px"}}
       >
         <GithubOutlined />
       </IconButton> */}

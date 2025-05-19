@@ -545,7 +545,7 @@ const BankReject = () => {
             justifyContent: "space-between",
           }}
         >
-          <h5 className="mb-0">Review Batches</h5>
+          <h5 className="mb-0">Bank Reject</h5>
 
           <div>
             <Button

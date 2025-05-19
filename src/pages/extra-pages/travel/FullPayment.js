@@ -9,7 +9,8 @@ import {
   Typography,
   Box,
   TextField,
-  FormControl,Chip,
+  FormControl,
+  Chip,
   Select,
   MenuItem,
 } from "@mui/material";
@@ -334,7 +335,7 @@ const FullPayment = () => {
       selector: (row) => row.partialPaidAmount,
       width: "200px",
     },
-  {
+    {
       name: "PDF",
       selector: (row) => row.pdF_FileUpload,
       cell: (row) => (
@@ -535,7 +536,7 @@ const FullPayment = () => {
             justifyContent: "space-between",
           }}
         >
-          <h5 className="mb-0">Review Batches</h5>
+          <h5 className="mb-0">Full Payment</h5>
 
           <div></div>
         </Box>
