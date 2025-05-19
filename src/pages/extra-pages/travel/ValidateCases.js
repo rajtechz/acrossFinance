@@ -250,14 +250,14 @@ const ValidateCases = () => {
     },
     {
       name: "GST",
-      selector: (row) => row.gst,
+      selector: (row) => `${row.gst || "18"}%`,
       width: "150px",
     }, // Fixed
-    // {
-    //   name: "TDS",
-    //   selector: (row) => row.tds,
-    //   width: "150px",
-    // },
+    {
+      name: "TDS",
+      selector: (row) => `${row.tds || "2"}%`,
+      width: "150px",
+    },
     {
       name: "Payable",
       selector: (row) => row.finalAmount,
@@ -265,11 +265,11 @@ const ValidateCases = () => {
     },
 
     {
-      name: "PDF",
-      selector: (row) => row.pdF_FileUpload,
+      name: "Invoice",
+      selector: (row) => row.invoice,
       cell: (row) => (
         <a
-          href={`https://mintflix.live:8086${row.pdF_FileUpload}`}
+          href={row.invoice}
           target="_blank"
           rel="noopener noreferrer"
         >

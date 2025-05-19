@@ -129,30 +129,38 @@ const PaymentScheduled = () => {
         </span>
       ),
     },
+    // {
+    //   name: "Select",
+    //   cell: (row) => (
+    //     <input
+    //       type="checkbox"
+    //       disabled={
+    //         row.status === "Batch Created" || row.status === "Invoice Uploaded"
+    //       }
+    //       style={{
+    //         cursor:
+    //           row.status === "Batch Created" ||
+    //           row.status === "Invoice Uploaded"
+    //             ? "not-allowed"
+    //             : "pointer",
+    //       }}
+    //       className="form-check-input"
+    //     />
+    //   ),
+    //   ignoreRowClick: true,
+    // },
     {
-      name: "Select",
-      cell: (row) => (
-        <input
-          type="checkbox"
-          disabled={
-            row.status === "Batch Created" || row.status === "Invoice Uploaded"
-          }
-          style={{
-            cursor:
-              row.status === "Batch Created" ||
-              row.status === "Invoice Uploaded"
-                ? "not-allowed"
-                : "pointer",
-          }}
-          className="form-check-input"
-        />
-      ),
-      ignoreRowClick: true,
+      name: "Schedule ID",
+      selector: (row) => row.scheduledId || "--",
+      width: "120px",
     },
-    { name: "Schedule ID", selector: (row) => row.schedulId || "--", width: "120px" },
     { name: "Batch No", selector: (row) => row.batchNo },
     { name: "Vendor Name", selector: (row) => row.vendorName, width: "150px" },
-    { name: "Approval Date", selector: (row) => row.approvalDate, width: "150px" },
+    {
+      name: "Approval Date",
+      selector: (row) => row.approvalDate,
+      width: "150px",
+    },
     { name: "Case Count", selector: (row) => row.caseCount, width: "150px" },
     { name: "Invoice No", selector: (row) => row.invoiceNo, width: "150px" },
     {
@@ -167,7 +175,7 @@ const PaymentScheduled = () => {
     },
     {
       name: "Reimbursement",
-      selector: (row) => row.reimbursements,
+      selector: (row) => row.reimbursment,
       width: "150px",
     }, // Fixed
     {
@@ -228,13 +236,9 @@ const PaymentScheduled = () => {
     },
     {
       name: "PDF",
-      selector: (row) => row.pdF_FileUpload,
+      selector: (row) => row.invoice,
       cell: (row) => (
-        <a
-          href={`https://mintflix.live:8086${row.pdF_FileUpload}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={row.invoice} target="_blank" rel="noopener noreferrer">
           <img src={pdf3} alt="PDF" style={{ width: "24px", height: "24px" }} />
         </a>
       ),
@@ -246,23 +250,7 @@ const PaymentScheduled = () => {
       name: "Invoice Status",
       cell: (row, index) => (
         <div>
-          {/* <Chip
-            label={"Paid"}
-            style={{
-              backgroundColor:
-                row.invoiceStatus === "Paid"
-                  ? "#34c759"
-                  : row.invoiceStatus === "Pending"
-                  ? "#ff9500"
-                  : "#f1c40f",
-              color: "white",
-              fontSize: "12px",
-              padding: "5px 10px",
-              borderRadius: "20px",
-            }}
-            onDelete={() => {
-              // Handle delete action if needed
-            }}/> */}
+         
           <Chip
             label={row.invoiceStatus || "Approved"}
             color="primary"
@@ -294,7 +282,7 @@ const PaymentScheduled = () => {
           label="Download"
           icon={<ExpandCircleDownRoundedIcon />}
           variant="outlined"
-          style={{ borderRadius: "20px",cursor: "pointer"  }}
+          style={{ borderRadius: "20px", cursor: "pointer" }}
         />
       ),
       width: "200px",
@@ -306,7 +294,7 @@ const PaymentScheduled = () => {
         <Chip
           label="Upload Bank File"
           color="primary"
-          style={{ borderRadius: "20px",cursor: "pointer" }}
+          style={{ borderRadius: "20px", cursor: "pointer" }}
         />
       ),
       width: "180px",
@@ -475,20 +463,7 @@ const PaymentScheduled = () => {
               }}
             />
           </Grid>
-          {/* <Grid item xs={12} md={2}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder=" Auto/Gadget"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid> */}
+      
           <Grid
             item
             xs={12}
@@ -547,6 +522,8 @@ const PaymentScheduled = () => {
           </div>
         )}
       </div>
+
+      
     </>
   );
 };

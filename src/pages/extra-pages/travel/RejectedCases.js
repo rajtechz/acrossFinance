@@ -187,11 +187,11 @@ const RejectedCases = () => {
       width: "150px",
     },
     {
-      name: "PDF",
-      selector: (row) => row.pdF_FileUpload,
+      name: "Invoice",
+      selector: (row) => row.pdf,
       cell: (row) => (
         <a
-          href={`${row.pdF_FileUpload}`}
+          href={`${row.pdf}`}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -200,12 +200,13 @@ const RejectedCases = () => {
       ),
       width: "150px",
     },
-    // { name: "PDF", selector: (row) => row.pdF_FileUpload, width: "150px" },
+   
     {
       name: "Remarks Date",
       selector: (row) => row.date,
       width: "150px",
     },
+     
     {
       name: "Remarks",
       selector: (row) => row.issue,
@@ -226,6 +227,20 @@ const RejectedCases = () => {
           </div>
         );
       },
+    },
+    {
+      name: "Remarks DOC",
+      selector: (row) => row.pdF_FileUpload,
+      cell: (row) => (
+        <a
+          href={`${row.pdF_FileUpload}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img src={pdf3} alt="PDF" style={{ width: "24px", height: "24px" }} />
+        </a>
+      ),
+      width: "150px",
     },
     {
       name: "Invoice Status",

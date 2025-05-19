@@ -155,6 +155,7 @@ const ReviewBatch = () => {
     }
   };
   const handleValidate = async (rowData) => {
+
     try {
       const formData = new FormData();
 
@@ -167,15 +168,14 @@ const ReviewBatch = () => {
       formData.append("InvoiceNo", rowData?.invoiceNo || "");
       formData.append("InvoiceDate", rowData?.invoiceDate || "");
       formData.append("InvoiceAmount", rowData?.invoiceAmount || "");
-      formData.append("Reimbursement", rowData?.reimbursement || ""); // Optional field
-      formData.append("Expense", rowData?.expense || ""); // Optional field
+      formData.append("Reimbursement", rowData?.reimbursement || ""); 
+      formData.append("Expense", rowData?.expense || ""); 
       formData.append("GST", rowData?.gst || "");
-      formData.append("TDS", rowData?.tds || ""); // Optional field
+      formData.append("TDS", rowData?.tds || "");
       formData.append("FinalAmount", rowData?.finalAmount || "");
-      formData.append("PDF", rowData?.invoice || "");
+      formData.append("Invoice", rowData?.invoice || "");
       formData.append("InvoiceStatus", rowData?.invoiceStatus || "");
       formData.append("FinanceStatus", rowData?.financeStatus || "Validated");
-      // If you want to pass other keys too (like customerName, imeiNo, etc.)
       formData.append("CustomerName", rowData?.customerName || "");
       formData.append("IMEINo", rowData?.imeiNo || "");
       formData.append("ServiceType", rowData?.serviceType || "");
@@ -187,42 +187,31 @@ const ReviewBatch = () => {
       formData.append("Total", rowData?.total || "");
       formData.append("SelectedService", rowData?.selectedService || "");
       formData.append("SellingPartner", rowData?.sellingPartner || "");
-
-      // Debug log: Show full payload
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
-
+      // for (let [key, value] of formData.entries()) {
+      //   console.log(`${key}: ${value}`);
+      // }
       const response = await fetch(`${baseURLProd}InsertValidateFinanceData`, {
         method: "POST",
         body: formData,
       });
-
       if (!response.ok) throw new Error("Validation failed");
-
       return await response.json();
     } catch (error) {
       console.error("Error in handleValidate:", error);
       throw error;
     }
   };
-
   const handleSubmit = async (rowData, dialogData = {}) => {
-    console.log("this is a number", rowData.aaNo);
+    // console.log("this invoice url to send in payload ", rowData.invoice);
     try {
       const formData = new FormData();
-
-      // ✅ Required fields (already present)
       formData.append("BatchNo", rowData?.batchNo || "");
       formData.append("AANo", rowData?.aaNo || "");
       formData.append("VendorName", rowData?.vendorName || "");
       formData.append("ApprovalDate", rowData?.creationDate || ""); // ✅ mapped correctly
       formData.append("InvoiceNo", rowData?.invoiceNo || "");
       formData.append("InvoiceAmount", rowData?.invoiceAmount || 0);
-      formData.append(
-        "FinanceStatus",
-        financeStatus || rowData?.invoiceStatus || ""
-      );
+      formData.append("FinanceStatus",financeStatus || rowData?.FinanceStatus || "");
       formData.append("CaseCount", rowData?.caseCount || 0);
       formData.append("InvoiceDate", rowData?.invoiceDate || "");
       formData.append("Reimbursement", rowData?.reimbursement || 0);
@@ -230,13 +219,12 @@ const ReviewBatch = () => {
       formData.append("GST", rowData?.gst || 0);
       formData.append("TDS", rowData?.tds || 0);
       formData.append("FinalAmount", rowData?.finalAmount || 0);
-      formData.append("PDF", rowData?.invoice || "");
+      formData.append("Invoice", rowData?.invoice || "");
       formData.append("InvoiceStatus", rowData?.invoiceStatus || "");
       formData.append("Date", date || new Date().toISOString().split("T")[0]);
       formData.append("Time", time || new Date().toTimeString().split(" ")[0]);
       formData.append("Status", financeStatus || rowData?.financeStatus || "");
       formData.append("Issue", dialogData?.Issue || remarks || "");
-
       formData.append("CustomerName", rowData?.customerName || "");
       formData.append("IMEINo", rowData?.imeiNo || "");
       formData.append("ServiceType", rowData?.serviceType || "");
@@ -256,17 +244,16 @@ const ReviewBatch = () => {
         formData.append("PDF_FileUpload", pdfFile);
       }
 
-      // ✅ Log full FormData for debug
-      console.log("📤 Submitting the following FormData:");
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
+      // // ✅ Log full FormData for debug
+      // console.log("📤 Submitting the following FormData:");
+      // for (let [key, value] of formData.entries()) {
+      //   console.log(`${key}: ${value}`);
+      // }
 
       const endpoint =
         financeStatus === "Validated"
           ? `${baseURLProd}InsertValidateFinanceData`
           : `${baseURLProd}UpdateFinanceStatus`;
-
       const response = await fetch(endpoint, {
         method: "POST",
         body: formData,
@@ -346,11 +333,11 @@ const ReviewBatch = () => {
       width: "150px",
     },
 
-    // {
-    //   name: "Reimbursement",
-    //   selector: (row) => row.reimbursement || "--",
-    //   width: "150px",
-    // },
+    {
+      name: "Reimbursement",
+      selector: (row) => row.reimbursement || "--",
+      width: "150px",
+    },
     {
       name: "Expense",
       selector: (row) => {
@@ -369,21 +356,21 @@ const ReviewBatch = () => {
       },
       width: "150px",
     },
-    { name: "GST", selector: (row) => row.gst || "--", width: "150px" },
-    // { name: "TDS", selector: (row) => row.tds || "--", width: "150px" },
+    { name: "GST", selector: (row) => `${row.gst}%` || "--", width: "150px" },
+    { name: "TDS", selector: (row) => `${row.tds}%` || "--", width: "150px" },
     { name: "Payable", selector: (row) => row.finalAmount, width: "150px" },
     {
-      name: "RepairCharges",
+      name: "Total Repair Charges",
       selector: (row) => row.totalRepairCharges,
-      width: "150px",
+      width: "200px",
     },
     {
-      name: "PDF",
+      name: "Invoice",
       selector: (row) => row.invoice,
       cell: (row) => (
         <a href={row.invoice} target="_blank" rel="noopener noreferrer">
           <img src={pdf3} alt="PDF" style={{ width: "24px", height: "24px" }} />
-        </a>
+         </a>
       ),
       width: "150px",
     },
@@ -641,7 +628,7 @@ const ReviewBatch = () => {
             justifyContent: "space-between",
           }}
         >
-          <h5 className="mb-0">Review Batches</h5>
+          <h5 className="mb-0">New Batches</h5>
         </Box>
 
         <Grid mb={3} container spacing={2}>
