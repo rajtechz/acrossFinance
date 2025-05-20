@@ -669,22 +669,7 @@ const BankReject = () => {
           </div>
         )}
 
-        <div className="d-flex justify-content-center align-content-center">
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: "#7E00D1",
-              fontWeight: "bold",
-              textTransform: "none",
-
-              "&:hover": {
-                backgroundColor: "#6C00BA",
-              },
-            }}
-          >
-            Submit
-          </Button>
-        </div>
+     
       </div>
 
       {/* Dialog */}

@@ -333,7 +333,7 @@ const RejectedCases = () => {
             justifyContent: "space-between",
           }}
         >
-          <h5 className="mb-0">Review Batches</h5>
+          <h5 className="mb-0">Reject Cases</h5>
         </Box>
 
         <Grid mb={3} container spacing={2}>

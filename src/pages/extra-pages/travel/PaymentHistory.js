@@ -300,32 +300,7 @@ const PartialHistory = () => {
       width: "180px",
     },
 
-    // {`
-    //   name: "Finance Status",
-    //   cell: (row, index) => (
-    //     <select
-    //       style={{
-    //         padding: "6px 10px",
-    //         borderRadius: "30px",
-    //         border: "1px solid #ccc",
-    //         backgroundColor: "#f9f9f9",
-    //         width: "140px",
-    //       }}
-    //     >
-    //       <option value="Not Submitted">Not Submitted</option>
-    //       <option value="Submitted">Submitted</option>
-    //       <option value="Approved">Validated</option>
-    //       <option value="Rejected">Rejected</option>
-    //       <option value="Rejected">Query</option>
-    //       <option value="Rejected">Payment Scheduled</option>
-    //       <option value="Rejected">Payment Hold</option>
-    //       <option value="Rejected">Partial Payment</option>
-    //       <option value="Rejected">Paid</option>
-    //       <option value="Rejected">Bank Reject</option>
-    //     </select>
-    //   ),
-    //   width: "180px",
-    // },
+    
 
     // { name: "UTR", selector: (row) =>   <Chip label="Upload UTR" color="success" style={{borderRadius:"20px"}} />
     //   , width: "200px" },
@@ -439,7 +414,7 @@ const PartialHistory = () => {
             justifyContent: "space-between",
           }}
         >
-          <h5 className="mb-0">Review Batches</h5>
+          <h5 className="mb-0">Payment History</h5>
 
           <div></div>
         </Box>
@@ -456,10 +431,7 @@ const PartialHistory = () => {
                 startAdornment: (
                   <InputAdornment position="start">
                     <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
+                  </InputAdornment>),}}/>
           </Grid>
           <Grid item xs={12} md={2}>
             <TextField
@@ -552,22 +524,7 @@ const PartialHistory = () => {
           </div>
         )}
 
-        <div className="d-flex justify-content-center align-content-center">
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: "#7E00D1",
-              fontWeight: "bold",
-              textTransform: "none",
-
-              "&:hover": {
-                backgroundColor: "#6C00BA",
-              },
-            }}
-          >
-            Submit
-          </Button>
-        </div>
+       
       </div>
     </>
   );

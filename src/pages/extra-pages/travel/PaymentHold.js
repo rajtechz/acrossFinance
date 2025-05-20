@@ -315,7 +315,7 @@ const PaymentHold = () => {
             justifyContent: "space-between",
           }}
         >
-          <h5 className="mb-0">Review Batches</h5>
+          <h5 className="mb-0">Payment Hold</h5>
 
           <div></div>
         </Box>
