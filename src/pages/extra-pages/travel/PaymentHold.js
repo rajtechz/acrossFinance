@@ -134,6 +134,7 @@ const PaymentHold = () => {
       ),
     },
 
+    
     { name: "Batch No", selector: (row) => row.batchNo },
     { name: "Vendor Name", selector: (row) => row.vendorName, width: "150px" },
     {
@@ -261,7 +262,6 @@ const PaymentHold = () => {
           sx={{ borderRadius: "20px" }}
         />
       ),
-
       width: "180px",
     },
     {
