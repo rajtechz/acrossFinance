@@ -62,9 +62,6 @@ const Login = () => {
           </TabContext>
         </Grid>
       </Grid>
-
-
-     
     </AuthWrapper>
   )
 }

@@ -1,8 +1,70 @@
-// hooks/PartialPaymentHook.js
+// // hooks/PartialPaymentHook.js
+// import { useEffect, useState } from "react";
+// import { baseURLProd } from "api/api";
+// import RemoveRedEyeOutlinedIcon from "@mui/icons-material/RemoveRedEyeOutlined";
+// import { useNavigate } from "react-router-dom";
+// const PartialPaymentHook = () => {
+//   const [data, setData] = useState([]);
+//   const [loading, setLoading] = useState(false);
+//   const [selectedRow, setSelectedRow] = useState(null);
+//   const [invoiceFile, setInvoiceFile] = useState(null);
+//   const [openBox, setOpenBox] = useState(false);
+//   const navigate = useNavigate();
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       setLoading(true);
+//       try {
+//         const response = await fetch(`${baseURLProd}GetFullAndPartialPayments`);
+//         const result = await response.json();
+//         console.log("this is result ", result);
+//         setData(result);
+//       } catch (err) {
+//         console.error(err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchData();
+//   }, []);
+
+//   const handleRowClick = (row) => {
+//     navigate("/allDetails");
+//     // setSelectedRow(row);
+//     // setOpenBox(true);
+//   };
+//   const handleOpenDialog = () => setOpenBox(true);
+//   const handleCloseDialog = () => {
+//     setOpenBox(false);
+//     setInvoiceFile(null);
+//     setSelectedRow(null);
+//   };
+//   const handleUploadUtr = () => {
+//     setOpenBox((prev) => !prev);
+//   };
+
+//   return {
+//     data,
+//     loading,
+//     selectedRow,
+//     invoiceFile,
+//     openBox,
+//     setInvoiceFile,
+//     handleRowClick,
+//     handleCloseDialog,
+//     setSelectedRow,
+//     setOpenBox,
+//     handleUploadUtr,
+//     handleOpenDialog,
+//   };
+// };
+
+// export default PartialPaymentHook;
+
 import { useEffect, useState } from "react";
 import { baseURLProd } from "api/api";
 import RemoveRedEyeOutlinedIcon from "@mui/icons-material/RemoveRedEyeOutlined";
 import { useNavigate } from "react-router-dom";
+
 const PartialPaymentHook = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -10,14 +72,18 @@ const PartialPaymentHook = () => {
   const [invoiceFile, setInvoiceFile] = useState(null);
   const [openBox, setOpenBox] = useState(false);
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${baseURLProd}GetPartialPayments`);
+        const response = await fetch(`${baseURLProd}GetFullAndPartialPayments`);
         const result = await response.json();
-        console.log("this is result ", result);
-        setData(result);
+        // Filter data to include only records with paymentType: "Partial Payment"
+        const filteredData = result.filter(
+          (item) => item.paymentType === "Partial Payment"
+        );
+        setData(filteredData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -26,6 +92,7 @@ const PartialPaymentHook = () => {
     };
     fetchData();
   }, []);
+  console.log("Filter data  for the api res  ", data);
 
   const handleRowClick = (row) => {
     navigate("/allDetails");

@@ -286,27 +286,54 @@ const PaymentScheduled = () => {
       ),
       width: "180px",
     },
+    // {
+    //   name: "Bank Formet Download",
+    //   cell: (row, index) => (
+    //     <Chip
+    //       label="Download"
+    //       icon={<ExpandCircleDownRoundedIcon />}
+    //       variant="outlined"
+    //       style={{ borderRadius: "20px", cursor: "pointer" }}
+    //     />
+    //   ),
+    //   width: "200px",
+    // },
+
     {
-      name: "Bank Formet Download",
+      name: "Bank Format Download",
       cell: (row, index) => (
-        // <StatusCell initialStatus={row.status || "Approved"} />
         <Chip
           label="Download"
-          icon={<ExpandCircleDownRoundedIcon />}
+          icon={<ExpandCircleDownRoundedIcon style={{ color: "#137333" }} />}
           variant="outlined"
-          style={{ borderRadius: "20px", cursor: "pointer" }}
+          sx={{
+            borderRadius: "20px",
+            borderColor: "#107C41",
+            color: "#137333",
+            fontWeight: 500,
+            backgroundColor: "#F0FFF0", // light green background
+            "& .MuiChip-icon": {
+              marginLeft: "4px",
+              marginRight: "-4px",
+            },
+            cursor: "pointer",
+          }}
         />
       ),
       width: "200px",
     },
+
     {
       name: "Upload Bank File",
       cell: (row, index) => (
-        // <StatusCell initialStatus={row.status || "Approved"} />
         <Chip
           label="Upload Bank File"
           color="primary"
-          style={{ borderRadius: "20px", cursor: "pointer" }}
+          style={{
+            borderRadius: "20px",
+            cursor: "pointer",
+            backgroundColor: "#7e00d1",
+          }}
         />
       ),
       width: "180px",
