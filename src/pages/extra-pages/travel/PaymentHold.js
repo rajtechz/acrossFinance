@@ -184,7 +184,32 @@ const PaymentHold = () => {
     // { name: "TDS", selector: (row) => row.tds, width: "150px" },
     { name: "Payable", selector: (row) => row.finalAmount, width: "150px" },
     {
-      name: "PDF",
+      name: "Invoice",
+      selector: (row) => row.invoice,
+      cell: (row) => (
+        <a
+          href={`${row.pdf}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img src={pdf3} alt="PDF" style={{ width: "24px", height: "24px" }} />
+        </a>
+      ),
+      width: "150px",
+    },
+      
+    {
+      name: "Service Charges",
+      selector: (row) => row.serviceCharges || "--",
+      width: "150px",
+    },
+    {
+      name: "Total Service Charges",
+      selector: (row) => row.totalServiceCharges || "--",
+      width: "200px",
+    },
+    {
+      name: "Hold DOC",
       selector: (row) => row.pdF_FileUpload,
       cell: (row) => (
         <a
@@ -253,32 +278,7 @@ const PaymentHold = () => {
       width: "180px",
     },
 
-    // {
-    //   name: "Finance Status",
-    //   cell: (row, index) => (
-    //     <select
-    //       style={{
-    //         padding: "6px 10px",
-    //         borderRadius: "30px",
-    //         border: "1px solid #ccc",
-    //         backgroundColor: "#f9f9f9",
-    //         width: "140px",
-    //       }}
-    //     >
-    //       <option value="Not Submitted">Not Submitted</option>
-    //       <option value="Submitted">Submitted</option>
-    //       <option value="Approved">Validated</option>
-    //       <option value="Rejected">Rejected</option>
-    //       <option value="Rejected">Query</option>
-    //       <option value="Rejected">Payment Scheduled</option>
-    //       <option value="Rejected">Payment Hold</option>
-    //       <option value="Rejected">Partial Payment</option>
-    //       <option value="Rejected">Paid</option>
-    //       <option value="Rejected">Bank Reject</option>
-    //     </select>
-    //   ),
-    //   width: "180px",
-    // },
+    
   ];
 
   console.log("this is selected row", selectedRow);

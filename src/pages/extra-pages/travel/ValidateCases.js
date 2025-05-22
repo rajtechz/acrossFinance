@@ -177,33 +177,7 @@ const ValidateCases = () => {
       ),
       ignoreRowClick: true,
     },
-    // {
-    //   name: "Select",
-    //   cell: (row) => (
-    //     <input
-    //       type="checkbox"
-    //       disabled={
-    //         row.invoiceStatus === "Batch Created" ||
-    //         row.invoiceStatus === "Invoice Uploaded"
-    //       }
-    //       checked={selectedBatches.some(
-    //         (batch) => batch.aA_Number === row.aA_Number
-    //       )}
-    //       onChange={(e) => {
-    //         if (e.target.checked) {
-    //           setSelectedBatches((prev) => [...prev, row]);
-    //         } else {
-    //           setSelectedBatches((prev) =>
-    //             prev.filter((batch) => batch.aA_Number !== row.aA_Number)
-    //           );
-    //         }
-    //       }}
-    //       className="form-check-input"
-    //     />
-    //   ),
-    //   ignoreRowClick: true,
-    // },
-
+    
     { name: "Batch No", selector: (row) => row.batchNo },
     { name: "Vendor Name", selector: (row) => row.vendorName, width: "150px" }, // Fixed to match the correct field name
     {
@@ -262,6 +236,21 @@ const ValidateCases = () => {
       name: "Payable",
       selector: (row) => row.finalAmount,
       width: "150px",
+    },
+    {
+      name: "Service Charges ",
+      selector: (row) => row.serviceCharges,
+      width: "150px",
+    },
+    {
+      name: "Total Service Charges",
+      selector: (row) => row.totalServiceCharges,
+      width: "200px",
+    },
+    {
+      name: "remarks",
+      selector: (row) => row.remarks,
+      width: "200px",
     },
 
     {

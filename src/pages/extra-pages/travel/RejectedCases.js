@@ -202,6 +202,21 @@ const RejectedCases = () => {
     },
    
     {
+      name: "Service Charges ",
+      selector: (row) => row.serviceCharges,
+      width: "150px",
+    },
+    {
+      name: "Service Charges ",
+      selector: (row) => row.serviceCharges,
+      width: "150px",
+    },
+    {
+      name: "Total Service Charges ",
+      selector: (row) => row.serviceCharges,
+      width: "200px",
+    },
+    {
       name: "Remarks Date",
       selector: (row) => row.date,
       width: "150px",

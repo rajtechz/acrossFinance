@@ -261,19 +261,45 @@ const QueryCases = () => {
       selector: (row) => row.gst,
       width: "150px",
     },
-    // {
-    //   name: "TDS",
-    //   selector: (row) => row.tds,
-    //   width: "150px",
-    // },
+    {
+      name: "TDS",
+      selector: (row) => row.tds,
+      width: "150px",
+    },
     {
       name: "Payable",
       selector: (row) => row.finalAmount || "--",
       width: "150px",
     },
-    // { name: "PDF", selector: (row) => row.pdfLink, width: "150px" },
+   
     {
-      name: "PDF",
+      name: "Service Charges",
+      selector: (row) => row.serviceCharges || "--",
+      width: "150px",
+    },
+    {
+      name: "Total Service Charges",
+      selector: (row) => row.totalServiceCharges || "--",
+      width: "150px",
+    },
+   
+    {
+      name: "Invoice",
+      selector: (row) => row.pdF_FileUpload,
+      cell: (row) => (
+        <a
+          href={`${row.invoice}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img src={pdf3} alt="PDF" style={{ width: "24px", height: "24px" }} />
+        </a>
+      ),
+      width: "150px",
+    },
+   
+    {
+      name: "Query DOC",
       selector: (row) => row.pdF_FileUpload,
       cell: (row) => (
         <a

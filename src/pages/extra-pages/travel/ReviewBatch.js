@@ -365,6 +365,21 @@ const ReviewBatch = () => {
       width: "200px",
     },
     {
+      name: "Service Charges",
+      selector: (row) => row.serviceCharges || "--",
+      width: "200px",
+    },
+    {
+      name: "Total Service Charges",
+      selector: (row) => row.totalServiceCharges || "--",
+      width: "200px",
+    },
+    {
+      name: "Remarks",
+      selector: (row) => row.remarks || "--",
+      width: "200px",
+    },
+    {
       name: "Invoice",
       selector: (row) => row.invoice,
       cell: (row) => (
