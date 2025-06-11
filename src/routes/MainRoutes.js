@@ -6,9 +6,9 @@ import ClaimDetailpage from "pages/extra-pages/travel/claimdetailpage";
 import DashboardAdmin from "pages/extra-pages/travel/DashboardAdmin";
 import FinalPayment from "pages/extra-pages/travel/FinalPayment";
 import FullPayment from "pages/extra-pages/travel/FullPayment";
+import HoldCases from "pages/extra-pages/travel/HoldCases";
 import PartialPayment from "pages/extra-pages/travel/PartialPayment";
 import PaymentHistory from "pages/extra-pages/travel/PaymentHistory";
-import PaymentHold from "pages/extra-pages/travel/PaymentHold";
 import PaymentScheduled from "pages/extra-pages/travel/PaymentScheduled";
 import QueryCases from "pages/extra-pages/travel/QueryCases";
 import RejectedCases from "pages/extra-pages/travel/RejectedCases";
@@ -37,8 +37,8 @@ const MainRoutes = {
       element: <ReviewBatch />,
     },
     {
-      path: "paymentHold",
-      element: <PaymentHold />,
+      path: "holdCases",
+      element: <HoldCases />,
     },
     {
       path: "paymentScheduled",

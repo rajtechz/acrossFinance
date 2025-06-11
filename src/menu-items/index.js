@@ -7,7 +7,7 @@ import assignrole from "./Assignrole";
 import createInsurer from "./createInsurer";
 import ReviewBatches from "./ReviewBatches";
 import VendorList from "./VendorList";
-import PaymentHold from "./PaymentHold";
+
 import ValidateCases from "./ValidateCases";
 import PaymentScheduled from "./PaymentScheduled";
 import RejectedCases from "./RejectedCases";
@@ -16,6 +16,7 @@ import PartialPayment from "./PartialPayment";
 import FullPayment from "./FullPayment";
 import BankReject from "./BankReject";
 import PaymentHistory from "./PaymentHistory";
+import holdCases from "./HoldCases";
 const getRoleFromStorage = () => {
   return localStorage.getItem("ROLE");
 };
@@ -49,7 +50,7 @@ const useMenuItems = () => {
         ValidateCases,
         RejectedCases,
         QueryCases,
-        PaymentHold,
+        holdCases,
         PaymentScheduled,
         PartialPayment,
         FullPayment,

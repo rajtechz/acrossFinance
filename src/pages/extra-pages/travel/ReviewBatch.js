@@ -24,7 +24,6 @@ import {
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-// import { data } from "./MockData";
 import { ToastContainer, toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
@@ -46,6 +45,7 @@ const ReviewBatch = () => {
   const [financeStatus, setFinanceStatus] = useState("");
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
+  const [categoryError, setCategoryError] = useState(false);
   const [remarks, setRemarks] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -69,6 +69,7 @@ const ReviewBatch = () => {
       setOpenBox(true);
     }
   };
+
   const {
     data,
     setData,
@@ -79,16 +80,10 @@ const ReviewBatch = () => {
     setSelectedRow,
     setOpenBox,
     setInvoiceFile,
-    // handleRowClick,
     handleCloseDialog,
     handleUploadUtr,
     handleOpenDialog,
   } = ReviewBatchHook();
-  // console.log("Full data:", data.total);
-
-  // if (Array.isArray(data)) {
-  //   data.forEach((item) => console.log("aaNo:", item.aaNo));
-  // }
 
   const getColorStyles = (status) => {
     switch (status) {
@@ -154,12 +149,10 @@ const ReviewBatch = () => {
         };
     }
   };
-  const handleValidate = async (rowData) => {
 
+  const handleValidate = async (rowData) => {
     try {
       const formData = new FormData();
-
-      // Append all properties from the API response as-is
       formData.append("AANo", rowData?.aaNo || "");
       formData.append("BatchNo", rowData?.batchNo || "");
       formData.append("VendorName", rowData?.vendorName || "");
@@ -168,8 +161,8 @@ const ReviewBatch = () => {
       formData.append("InvoiceNo", rowData?.invoiceNo || "");
       formData.append("InvoiceDate", rowData?.invoiceDate || "");
       formData.append("InvoiceAmount", rowData?.invoiceAmount || "");
-      formData.append("Reimbursement", rowData?.reimbursement || ""); 
-      formData.append("Expense", rowData?.expense || ""); 
+      formData.append("Reimbursement", rowData?.reimbursement || "");
+      formData.append("Expense", rowData?.expense || "");
       formData.append("GST", rowData?.gst || "");
       formData.append("TDS", rowData?.tds || "");
       formData.append("FinalAmount", rowData?.finalAmount || "");
@@ -187,9 +180,7 @@ const ReviewBatch = () => {
       formData.append("Total", rowData?.total || "");
       formData.append("SelectedService", rowData?.selectedService || "");
       formData.append("SellingPartner", rowData?.sellingPartner || "");
-      // for (let [key, value] of formData.entries()) {
-      //   console.log(`${key}: ${value}`);
-      // }
+
       const response = await fetch(`${baseURLProd}InsertValidateFinanceData`, {
         method: "POST",
         body: formData,
@@ -201,17 +192,17 @@ const ReviewBatch = () => {
       throw error;
     }
   };
+
   const handleSubmit = async (rowData, dialogData = {}) => {
-    // console.log("this invoice url to send in payload ", rowData.invoice);
     try {
       const formData = new FormData();
       formData.append("BatchNo", rowData?.batchNo || "");
       formData.append("AANo", rowData?.aaNo || "");
       formData.append("VendorName", rowData?.vendorName || "");
-      formData.append("ApprovalDate", rowData?.creationDate || ""); // ✅ mapped correctly
+      formData.append("ApprovalDate", rowData?.creationDate || "");
       formData.append("InvoiceNo", rowData?.invoiceNo || "");
       formData.append("InvoiceAmount", rowData?.invoiceAmount || 0);
-      formData.append("FinanceStatus",financeStatus || rowData?.FinanceStatus || "");
+      formData.append("FinanceStatus", financeStatus || rowData?.FinanceStatus || "");
       formData.append("CaseCount", rowData?.caseCount || 0);
       formData.append("InvoiceDate", rowData?.invoiceDate || "");
       formData.append("Reimbursement", rowData?.reimbursement || 0);
@@ -237,18 +228,11 @@ const ReviewBatch = () => {
       formData.append("SelectedService", rowData?.selectedService || "");
       formData.append("SellingPartner", rowData?.sellingPartner || "");
 
-      // ✅ File upload
       if (dialogData?.PDF_FileUpload) {
         formData.append("PDF_FileUpload", dialogData.PDF_FileUpload);
       } else if (pdfFile) {
         formData.append("PDF_FileUpload", pdfFile);
       }
-
-      // // ✅ Log full FormData for debug
-      // console.log("📤 Submitting the following FormData:");
-      // for (let [key, value] of formData.entries()) {
-      //   console.log(`${key}: ${value}`);
-      // }
 
       const endpoint =
         financeStatus === "Validated"
@@ -277,12 +261,20 @@ const ReviewBatch = () => {
   };
 
   const handleDialogSubmit = async () => {
+    if (!category) {
+      setCategoryError(true);
+      toast.error("Please select a Remarks Category.");
+      return;
+    }
+
     try {
       await handleSubmit(selectedRow, {
         Issue: issue,
         PDF_FileUpload: pdfFileUpload,
       });
       setOpenBox(false);
+      setCategoryError(false);
+      setCategory(""); // Reset category after submission
     } catch (error) {
       console.error("Submission failed:", error);
     }
@@ -332,7 +324,6 @@ const ReviewBatch = () => {
       selector: (row) => row.invoiceAmount || "--",
       width: "150px",
     },
-
     {
       name: "Reimbursement",
       selector: (row) => row.reimbursement || "--",
@@ -342,16 +333,11 @@ const ReviewBatch = () => {
       name: "Expense",
       selector: (row) => {
         if (!row.grossAmount || row.grossAmount === "--") return "--";
-
-        // Remove any non-digit characters (except commas) and split by comma
         const amounts = row.grossAmount.replace(/[^\d,]/g, "").split(",");
-
-        // Convert to numbers and sum them up
         const sum = amounts.reduce((total, amount) => {
           const num = parseFloat(amount) || 0;
           return total + num;
         }, 0);
-
         return sum.toLocaleString();
       },
       width: "150px",
@@ -385,7 +371,7 @@ const ReviewBatch = () => {
       cell: (row) => (
         <a href={row.invoice} target="_blank" rel="noopener noreferrer">
           <img src={pdf3} alt="PDF" style={{ width: "24px", height: "24px" }} />
-         </a>
+        </a>
       ),
       width: "150px",
     },
@@ -431,7 +417,6 @@ const ReviewBatch = () => {
               value={currentStatus}
               onChange={async (e) => {
                 const selected = e?.target?.value;
-                // console.log("Selected status:", selected);
                 row.financeStatus = selected;
                 setSelectedRow(row);
                 setFinanceStatus(selected);
@@ -498,17 +483,15 @@ const ReviewBatch = () => {
     invoiceNo: "",
     batchNo: "",
     filterDate: null,
-    status: "", // Added status filter
+    status: "",
   });
 
   const [filteredData, setFilteredData] = useState([]);
 
-  // Initialize with all data when component mounts
   useEffect(() => {
     setFilteredData(data || []);
   }, [data]);
 
-  // Apply filters whenever filters or data changes
   useEffect(() => {
     if (!data || data.length === 0) {
       setFilteredData([]);
@@ -516,52 +499,31 @@ const ReviewBatch = () => {
     }
 
     const filtered = data.filter((item) => {
-      // console.log("Checking item:", item);
-
-      // Vendor filter
       const vendorMatch =
-        item.vendorName
-          ?.toLowerCase()
-          .includes(filters.vendorName.toLowerCase()) ?? true;
-
-      // console.log(`Vendor match for ${item.vendorName}:`, vendorMatch);
-
-      // Invoice filter
+        item.vendorName?.toLowerCase().includes(filters.vendorName.toLowerCase()) ?? true;
       const invoiceMatch = (item.invoiceNumber || "")
         .toLowerCase()
         .includes(filters.invoiceNo.toLowerCase());
-
-      // Batch filter
       const batchMatch = (item.batchNo || "")
         .toLowerCase()
         .includes(filters.batchNo.toLowerCase());
-
-      // Date filter
       let dateMatch = true;
       if (filters.filterDate) {
         try {
           const itemDate = dayjs(item.approvalDate);
           const filterDate = dayjs(filters.filterDate);
           dateMatch = itemDate.isSame(filterDate, "day");
-          // console.log(`Date match for ${item.approvalDate}:`, dateMatch);
         } catch (e) {
           console.error("Date parsing error:", e);
         }
       }
-
-      // Status filter
       const statusMatch =
         !filters.status ||
         item.financeStatus?.toLowerCase() === filters.status.toLowerCase();
 
-      // console.log(`Status match for ${item.financeStatus}:`, statusMatch);
-
-      return (
-        vendorMatch && invoiceMatch && batchMatch && dateMatch && statusMatch
-      );
+      return vendorMatch && invoiceMatch && batchMatch && dateMatch && statusMatch;
     });
 
-    // console.log("Filtered results:", filtered);
     setFilteredData(filtered);
   }, [filters, data]);
 
@@ -580,45 +542,24 @@ const ReviewBatch = () => {
     }));
   };
 
-  // console.log("this is selected row", selectedRow);
-
-  // For the view modal, use selectedViewRow instead of selectedRow
   const customerNames =
-    selectedViewRow?.customerName
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+    selectedViewRow?.customerName?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const aaNos =
-    selectedViewRow?.aaNo
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+    selectedViewRow?.aaNo?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const imeis =
-    selectedViewRow?.imeiNo
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+    selectedViewRow?.imeiNo?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const serviceTypes =
-    selectedViewRow?.serviceType
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+    selectedViewRow?.serviceType?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const brands =
-    selectedViewRow?.brand
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+    selectedViewRow?.brand?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const models =
-    selectedViewRow?.makeModel
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+    selectedViewRow?.makeModel?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const repairs =
-    selectedViewRow?.repairCharges
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+    selectedViewRow?.repairCharges?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const gstCharges =
-    selectedViewRow?.chargesInclGST
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+    selectedViewRow?.chargesInclGST?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const grossAmounts =
-    selectedViewRow?.total
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+    selectedViewRow?.total?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const maxLength = Math.max(
     customerNames.length,
     aaNos.length,
@@ -700,7 +641,6 @@ const ReviewBatch = () => {
 
         <DataTable
           columns={columns}
-          // data={data || []}
           data={filteredData || []}
           fixedHeader
           pagination
@@ -805,11 +745,7 @@ const ReviewBatch = () => {
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <strong>
-                  Vendor Name-{" "}
-                  <span style={{ color: "green" }}>
-                    {" "}
-                    {selectedRow?.vendorName}
-                  </span>
+                  Vendor Name- <span style={{ color: "green" }}>{selectedRow?.vendorName}</span>
                 </strong>
                 <span
                   style={{
@@ -824,62 +760,28 @@ const ReviewBatch = () => {
                 </span>
               </Grid>
 
-              {/* <Grid item xs={6}>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="Date"
-                    value={date ? dayjs(date) : null}
-                    onChange={(newValue) => {
-                      if (newValue) {
-                        setDate(dayjs(newValue).format("YYYY-MM-DD"));
-                      }
-                    }}
-                    minDate={dayjs()}
-                    format="DD-MM-YYYY"
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: "medium",
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-              </Grid> */}
-
-              {/* <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Time"
-                  type="time"
-                  InputLabelProps={{ shrink: true }}
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                />
-              </Grid> */}
-
-              {/* <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                  >
-                    <MenuItem value="Pending">Pending</MenuItem>
-                    <MenuItem value="Resolved">Resolved</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid> */}
-
               <Grid item xs={12}>
-                <FormControl fullWidth>
+                <FormControl fullWidth error={categoryError}>
                   <InputLabel>Remarks Category</InputLabel>
                   <Select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => {
+                      setCategory(e.target.value);
+                      setCategoryError(false); // Reset error when a value is selected
+                    }}
+                    required
                   >
+                    <MenuItem value="" disabled>
+                      Select Category
+                    </MenuItem>
                     <MenuItem value="Billing">Billing</MenuItem>
                     <MenuItem value="Technical">Technical</MenuItem>
                   </Select>
+                  {categoryError && (
+                    <Typography color="error" variant="caption">
+                      Remarks Category is required
+                    </Typography>
+                  )}
                 </FormControl>
               </Grid>
 
@@ -888,7 +790,7 @@ const ReviewBatch = () => {
                   fullWidth
                   multiline
                   rows={4}
-                  placeholder="Enter your remark  "
+                  placeholder="Enter your remark"
                   variant="outlined"
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
@@ -908,14 +810,10 @@ const ReviewBatch = () => {
                   }}
                   onClick={() => document.getElementById("pdfUpload").click()}
                 >
-                  <FileUploadIcon
-                    style={{ fontSize: "24px", marginBottom: "8px" }}
-                  />
+                  <FileUploadIcon style={{ fontSize: "24px", marginBottom: "8px" }} />
                   <br />
                   Drag and drop or{" "}
-                  <span
-                    style={{ color: "#5D5FEF", textDecoration: "underline" }}
-                  >
+                  <span style={{ color: "#5D5FEF", textDecoration: "underline" }}>
                     browse
                   </span>{" "}
                   your files
@@ -1010,9 +908,7 @@ const ReviewBatch = () => {
               style={{ textDecoration: "none" }}
               aria-label="Open Invoice PDF"
             >
-              <PictureAsPdfIcon
-                sx={{ color: "red", fontSize: "28px", cursor: "pointer" }}
-              />
+              <PictureAsPdfIcon sx={{ color: "red", fontSize: "28px", cursor: "pointer" }} />
             </a>
           ) : (
             <span style={{ color: "gray", fontSize: "14px" }}>No Invoice</span>
@@ -1020,20 +916,17 @@ const ReviewBatch = () => {
         </DialogTitle>
 
         <DialogContent>
-          {/* Detailed Items Table */}
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell>View</TableCell>
                 <TableCell>Customer Name</TableCell>
-                {/* <TableCell>AA No</TableCell> */}
                 <TableCell>IMEI No</TableCell>
                 <TableCell>Service Type</TableCell>
                 <TableCell>Brand</TableCell>
                 <TableCell>Model</TableCell>
                 <TableCell>Repair Charges</TableCell>
                 <TableCell>GST Charges</TableCell>
-                {/* <TableCell>Total Amount</TableCell> */}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1044,27 +937,25 @@ const ReviewBatch = () => {
                       style={{ cursor: "pointer", color: "#7E00D1" }}
                       onClick={() =>
                         navigate("/allDetails", {
-                          state: { aaNumber: aaNos[index] }, // <-- only that row's AA number
+                          state: { aaNumber: aaNos[index] },
                         })
                       }
                     />
                   </TableCell>
                   <TableCell>{customerNames[index] || "-"}</TableCell>
-                  {/* <TableCell>{aaNos[index] || "-"}</TableCell> */}
                   <TableCell>{imeis[index] || "-"}</TableCell>
                   <TableCell>{serviceTypes[index] || "-"}</TableCell>
                   <TableCell>{brands[index] || "-"}</TableCell>
                   <TableCell>{models[index] || "-"}</TableCell>
                   <TableCell>{repairs[index] || "-"}</TableCell>
                   <TableCell>{gstCharges[index] || "-"}</TableCell>
-                  {/* <TableCell>{grossAmounts[index] || "-"}</TableCell> */}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
             <Button variant="outlined">
-              Total Amount : {selectedViewRow?.finalAmount}
+              Total Amount: {selectedViewRow?.finalAmount}
             </Button>
           </Box>
         </DialogContent>
