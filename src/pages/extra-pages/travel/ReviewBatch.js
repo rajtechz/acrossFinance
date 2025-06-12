@@ -175,6 +175,7 @@ const ReviewBatch = () => {
       formData.append("Brand", rowData?.brand || "");
       formData.append("MakeModel", rowData?.makeModel || "");
       formData.append("RepairCharges", rowData?.repairCharges || "");
+      formData.append("ServiceCharges", rowData?.serviceCharges || "");
       formData.append("ChargesInclGST", rowData?.chargesInclGST || "");
       formData.append("GrossAmount", rowData?.grossAmount || "");
       formData.append("Total", rowData?.total || "");
@@ -326,40 +327,45 @@ const ReviewBatch = () => {
     },
     {
       name: "Reimbursement",
-      selector: (row) => row.reimbursement || "--",
+      selector: (row) => row.totalServiceCharges || "--",
       width: "150px",
     },
     {
       name: "Expense",
-      selector: (row) => {
-        if (!row.grossAmount || row.grossAmount === "--") return "--";
-        const amounts = row.grossAmount.replace(/[^\d,]/g, "").split(",");
-        const sum = amounts.reduce((total, amount) => {
-          const num = parseFloat(amount) || 0;
-          return total + num;
-        }, 0);
-        return sum.toLocaleString();
-      },
+      selector: (row) => row.totalRepairCharges || "--",
       width: "150px",
     },
+    // {
+    //   name: "Expense",
+    //   selector: (row) => {
+    //     if (!row.grossAmount || row.grossAmount === "--") return "--";
+    //     const amounts = row.grossAmount.replace(/[^\d,]/g, "").split(",");
+    //     const sum = amounts.reduce((total, amount) => {
+    //       const num = parseFloat(amount) || 0;
+    //       return total + num;
+    //     }, 0);
+    //     return sum.toLocaleString();
+    //   },
+    //   width: "150px",
+    // },
     { name: "GST", selector: (row) => `${row.gst}%` || "--", width: "150px" },
     { name: "TDS", selector: (row) => `${row.tds}%` || "--", width: "150px" },
     { name: "Payable", selector: (row) => row.finalAmount, width: "150px" },
-    {
-      name: "Total Repair Charges",
-      selector: (row) => row.totalRepairCharges,
-      width: "200px",
-    },
-    {
-      name: "Service Charges",
-      selector: (row) => row.serviceCharges || "--",
-      width: "200px",
-    },
-    {
-      name: "Total Service Charges",
-      selector: (row) => row.totalServiceCharges || "--",
-      width: "200px",
-    },
+    // {
+    //   name: "Total Repair Charges",
+    //   selector: (row) => row.totalRepairCharges,
+    //   width: "200px",
+    // },
+    // {
+    //   name: "Service Charges",
+    //   selector: (row) => row.serviceCharges || "--",
+    //   width: "200px",
+    // },
+    // {
+    //   name: "Total Service Charges",
+    //   selector: (row) => row.totalServiceCharges || "--",
+    //   width: "200px",
+    // },
     {
       name: "Remarks",
       selector: (row) => row.remarks || "--",
@@ -554,10 +560,9 @@ const ReviewBatch = () => {
     selectedViewRow?.brand?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const models =
     selectedViewRow?.makeModel?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
-  const repairs =
-    selectedViewRow?.repairCharges?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
-  const gstCharges =
-    selectedViewRow?.chargesInclGST?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
+  const repairs = selectedViewRow?.repairCharges?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
+  const serviceCharges = selectedViewRow?.serviceCharges?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
+  const gstCharges =selectedViewRow?.chargesInclGST?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const grossAmounts =
     selectedViewRow?.total?.split(",").map((item) => (item === "NULL" ? "-" : item)) || [];
   const maxLength = Math.max(
@@ -568,6 +573,7 @@ const ReviewBatch = () => {
     brands.length,
     models.length,
     repairs.length,
+    serviceCharges.length,
     gstCharges.length,
     grossAmounts.length
   );
@@ -926,7 +932,7 @@ const ReviewBatch = () => {
                 <TableCell>Brand</TableCell>
                 <TableCell>Model</TableCell>
                 <TableCell>Repair Charges</TableCell>
-                <TableCell>GST Charges</TableCell>
+                <TableCell>Service Charges</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -948,7 +954,8 @@ const ReviewBatch = () => {
                   <TableCell>{brands[index] || "-"}</TableCell>
                   <TableCell>{models[index] || "-"}</TableCell>
                   <TableCell>{repairs[index] || "-"}</TableCell>
-                  <TableCell>{gstCharges[index] || "-"}</TableCell>
+                  <TableCell>{serviceCharges[index] || "-"}</TableCell>
+                
                 </TableRow>
               ))}
             </TableBody>
@@ -973,3 +980,5 @@ const ReviewBatch = () => {
 };
 
 export default ReviewBatch;
+
+

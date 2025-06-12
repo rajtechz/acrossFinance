@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 const ReviewBatchHook = () => {
   const [data, setData] = useState([]);
 
-  console.log(data ,"data revieew batch aaNo")
+  // console.log(data ,"data revieew batch aaNo")
   const [loading, setLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [invoiceFile, setInvoiceFile] = useState(null);

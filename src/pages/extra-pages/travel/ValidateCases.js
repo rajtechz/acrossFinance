@@ -177,7 +177,7 @@ const ValidateCases = () => {
       ),
       ignoreRowClick: true,
     },
-    
+
     { name: "Batch No", selector: (row) => row.batchNo },
     { name: "Vendor Name", selector: (row) => row.vendorName, width: "150px" }, // Fixed to match the correct field name
     {
@@ -237,16 +237,16 @@ const ValidateCases = () => {
       selector: (row) => row.finalAmount,
       width: "150px",
     },
-    {
-      name: "Service Charges ",
-      selector: (row) => row.serviceCharges,
-      width: "150px",
-    },
-    {
-      name: "Total Service Charges",
-      selector: (row) => row.totalServiceCharges,
-      width: "200px",
-    },
+    // {
+    //   name: "Service Charges ",
+    //   selector: (row) => row.serviceCharges,
+    //   width: "150px",
+    // },
+    // {
+    //   name: "Total Service Charges",
+    //   selector: (row) => row.totalServiceCharges,
+    //   width: "200px",
+    // },
     {
       name: "remarks",
       selector: (row) => row.remarks,
@@ -257,11 +257,7 @@ const ValidateCases = () => {
       name: "Invoice",
       selector: (row) => row.invoice,
       cell: (row) => (
-        <a
-          href={row.invoice}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={row.invoice} target="_blank" rel="noopener noreferrer">
           <img src={pdf3} alt="PDF" style={{ width: "24px", height: "24px" }} />
         </a>
       ),
@@ -380,6 +376,7 @@ const ValidateCases = () => {
   const brands = selectedRow?.brand?.split(",") || [];
   const models = selectedRow?.makeModel?.split(",") || [];
   const repairs = selectedRow?.repairCharges?.split(",") || [];
+  const serviceCharges = selectedRow?.serviceCharges?.split(",") || [];
   const gstCharges = selectedRow?.chargesInclGST?.split(",") || [];
   const grossAmount = selectedRow?.grossAmount?.split(",") || [];
   console.table("name", customerNames);
@@ -391,6 +388,7 @@ const ValidateCases = () => {
     brands.length,
     models.length,
     repairs.length,
+    serviceCharges.length,
     gstCharges.length,
     grossAmount.length
   );
@@ -638,42 +636,43 @@ const ValidateCases = () => {
 
         <DialogContent>
           <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>View</TableCell>
-                <TableCell>Customer Name</TableCell>
-                {/* <TableCell>AA No</TableCell> */}
-                <TableCell>IMEI No</TableCell>
-                <TableCell>Service Type</TableCell>
-                <TableCell>Brand</TableCell>
-                <TableCell>Model</TableCell>
-                <TableCell>Repair Charges</TableCell>
-                <TableCell>GST Charges</TableCell>
-                <TableCell>GrossAmount</TableCell>
-              </TableRow>
-            </TableHead>
+          <TableHead>
+  <TableRow>
+    {[
+      "View",
+      "Customer Name",
+      "IMEI No",
+      "Service Type",
+      "Brand",
+      "Model",
+      "Repair Charges",
+      "Service Charges",
+    ].map((heading, index) => (
+      <TableCell
+        key={index}
+        style={{ whiteSpace: "nowrap" }} // 👈 prevents wrapping
+      >
+        {heading}
+      </TableCell>
+    ))}
+  </TableRow>
+</TableHead>
+
             <TableBody>
               {[...Array(maxLength)].map((_, index) => (
                 <TableRow key={index}>
                   <TableCell>
                     <RemoveRedEyeIcon
                       style={{ cursor: "pointer", color: "#7E00D1" }}
-                      onClick={() =>
-                        navigate("/allDetails", {
-                          state: { aaNumber: aaNos[index] }, // <-- only that row's AA number
-                        })
-                      }
-                    />
+                      onClick={() =>navigate("/allDetails", {state: { aaNumber: aaNos[index] },})}/>
                   </TableCell>
                   <TableCell>{customerNames[index] || "-"}</TableCell>
-                  {/* <TableCell>{aaNos[index] || "-"}</TableCell> */}
                   <TableCell>{imeis[index] || "-"}</TableCell>
                   <TableCell>{serviceTypes[index] || "-"}</TableCell>
                   <TableCell>{brands[index] || "-"}</TableCell>
                   <TableCell>{models[index] || "-"}</TableCell>
                   <TableCell>{repairs[index] || "-"}</TableCell>
-                  <TableCell>{gstCharges[index] || "-"}</TableCell>
-                  <TableCell>{grossAmount[index] || "-"}</TableCell>
+                  <TableCell>{serviceCharges[index] || "-"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
