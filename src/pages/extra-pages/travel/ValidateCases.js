@@ -199,29 +199,17 @@ const ValidateCases = () => {
       width: "150px",
     }, // Fixed
 
-    // {
-    //   name: "Reimbursement",
-    //   selector: (row) => row.reimbursement,
-    //   width: "150px",
-    // },
     {
-      name: "Expense",
-      selector: (row) => {
-        if (!row.grossAmount || row.grossAmount === "--") return "--";
-
-        // Remove any non-digit characters (except commas) and split by comma
-        const amounts = row.grossAmount.replace(/[^\d,]/g, "").split(",");
-
-        // Convert to numbers and sum them up
-        const sum = amounts.reduce((total, amount) => {
-          const num = parseFloat(amount) || 0;
-          return total + num;
-        }, 0);
-
-        return sum.toLocaleString(); // Format with commas if needed
-      },
+      name: "Reimbursement",
+      selector: (row) => row.totalServiceCharges,
       width: "150px",
     },
+    {
+      name: "Expense",
+      selector: (row) => row.totalRepairCharges,
+      width: "150px",
+    },
+  
     {
       name: "GST",
       selector: (row) => `${row.gst || "18"}%`,
@@ -248,7 +236,7 @@ const ValidateCases = () => {
     //   width: "200px",
     // },
     {
-      name: "remarks",
+      name: "Remarks",
       selector: (row) => row.remarks,
       width: "200px",
     },

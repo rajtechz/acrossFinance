@@ -151,6 +151,7 @@ const ReviewBatch = () => {
   };
 
   const handleValidate = async (rowData) => {
+    console.log("Validating row data:", rowData);
     try {
       const formData = new FormData();
       formData.append("AANo", rowData?.aaNo || "");
@@ -175,10 +176,13 @@ const ReviewBatch = () => {
       formData.append("Brand", rowData?.brand || "");
       formData.append("MakeModel", rowData?.makeModel || "");
       formData.append("RepairCharges", rowData?.repairCharges || "");
-      formData.append("ServiceCharges", rowData?.serviceCharges || "");
+      // formData.append("ServiceCharges", rowData?.serviceCharges || "");
+      formData.append("TotalServiceCharges", rowData?.totalServiceCharges || "");
+      formData.append("TotalRepairCharges", rowData?.totalRepairCharges || "");
       formData.append("ChargesInclGST", rowData?.chargesInclGST || "");
       formData.append("GrossAmount", rowData?.grossAmount || "");
       formData.append("Total", rowData?.total || "");
+      formData.append("Remarks", rowData?.remarks || "");
       formData.append("SelectedService", rowData?.selectedService || "");
       formData.append("SellingPartner", rowData?.sellingPartner || "");
 
@@ -969,7 +973,8 @@ const ReviewBatch = () => {
         <DialogActions>
           <Button
             onClick={() => setViewModalOpen(false)}
-            style={{ backgroundColor: "#FE7C0B", color: "#fff" }}>
+            style={{ backgroundColor: "#FE7C0B", color: "#fff" }}
+>
             Close
           </Button>
         </DialogActions>
