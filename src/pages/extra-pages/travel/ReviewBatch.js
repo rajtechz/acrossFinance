@@ -969,8 +969,7 @@ const ReviewBatch = () => {
         <DialogActions>
           <Button
             onClick={() => setViewModalOpen(false)}
-            style={{ backgroundColor: "#FE7C0B", color: "#fff" }}
-          >
+            style={{ backgroundColor: "#FE7C0B", color: "#fff" }}>
             Close
           </Button>
         </DialogActions>
