@@ -23,6 +23,7 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  Tooltip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import pdf3 from "../../../assets/images/users/pdf3.png";
@@ -38,10 +39,9 @@ import FileUploadIcon from "@mui/icons-material/FileUpload";
 import DataTable from "react-data-table-component";
 import { useNavigate } from "react-router-dom";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-
-// import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import ValidateCasesHook from "./ValidateCasesHook";
+import { baseURLProd } from "api/api";
 
 const ValidateCases = () => {
   const navigate = useNavigate();
@@ -49,14 +49,10 @@ const ValidateCases = () => {
   const [batches, setBatches] = useState();
   const [selectedBatches, setSelectedBatches] = useState([]);
   const [showFinalTable, setShowFinalTable] = useState(false);
+  const [apiData, setApiData] = useState([]);
+  const [mismatchData, setMismatchData] = useState({});
+  const [selectedViewRow, setSelectedViewRow] = useState(null);
 
-  // Add state for search filters
-  const handleDelete = (batchToDelete) => {
-    setBatches((prev) => prev.filter((batch) => batch !== batchToDelete));
-  };
-  const handleChange = (event) => {
-    setStatus(event.target.value);
-  };
   const {
     data,
     loading,
@@ -64,13 +60,135 @@ const ValidateCases = () => {
     invoiceFile,
     openBox,
     setInvoiceFile,
-    handleRowClick,
     handleCloseDialog,
     handleUploadUtr,
     setOpenBox,
+    setSelectedRow,
+    setViewModalOpen,
+    setLoading,
   } = ValidateCasesHook();
 
-  console.log("this is data validete", data);
+  const handleRowClick = (row, action = "view") => {
+    console.log("onclick eye button service charge", row.serviceCharges);
+    console.log("onclick eye button repair charge", row.repairCharges);
+    console.log("onclick eye button aaNo", row.aaNo);
+    console.log("onclick eye button selling partner", row.vendorName);
+    setOpenBox(true);
+    setSelectedRow(row);
+    if (action === "view") {
+      setSelectedViewRow(row);
+      setOpenBox(true);
+    } else {
+      setSelectedRow(row);
+      setOpenBox(true);
+    }
+
+    if (!row) return;
+
+    setLoading(true);
+
+    fetch(`${baseURLProd}GetGadgetCaseDetailsByAA?aaNumbers=${row.aaNo}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        const items = data.dataItems || [];
+        console.log("apiData", items);
+
+        const rowServiceCharges = row.serviceCharges
+          ?.split(",")
+          .map((val) => parseFloat(val.trim()));
+
+        const rowRepairCharges = row.repairCharges
+          ?.split(",")
+          .map((val) => parseFloat(val.trim()));
+
+        const rowAANumbers = row.aaNo?.split(",").map((val) => val.trim());
+
+        const rowSellingPartner = row.sellingPartner?.trim().toLowerCase();
+
+        const mismatches = {};
+
+        items.forEach((item, index) => {
+          const apiServiceCharge = parseFloat(item.serviceCharges);
+          const apiRepairCharge = parseFloat(item.repairCharges);
+          const apiAANumber = item.aA_Number?.trim();
+          const apiSellingPartner = item.sellingPartner?.trim().toLowerCase();
+
+          mismatches[index] = {
+            serviceMismatch: !rowServiceCharges?.some(
+              (val) => Math.abs(val - apiServiceCharge) < 0.01
+            ),
+            repairMismatch: !rowRepairCharges?.some(
+              (val) => Math.abs(val - apiRepairCharge) < 0.01
+            ),
+            aaMismatch: !rowAANumbers?.includes(apiAANumber),
+            sellingPartnerMismatch: apiSellingPartner !== rowSellingPartner,
+            rowData: {
+              serviceCharge: rowServiceCharges ? rowServiceCharges[index] : "-",
+              repairCharge: rowRepairCharges ? rowRepairCharges[index] : "-",
+              aaNumber: rowAANumbers ? rowAANumbers[index] : "-",
+              sellingPartner: rowSellingPartner || "-",
+            },
+            apiData: {
+              serviceCharge: apiServiceCharge || "-",
+              repairCharge: apiRepairCharge || "-",
+              aaNumber: apiAANumber || "-",
+              sellingPartner: apiSellingPartner || "-",
+            },
+          };
+
+          if (mismatches[index].serviceMismatch) {
+            console.warn(`❌ Service Charges mismatch for item ${index + 1}`);
+            console.log("API:", apiServiceCharge, "Row:", rowServiceCharges);
+          } else {
+            console.log(`✅ Service Charges matched for item ${index + 1}`);
+          }
+
+          if (mismatches[index].repairMismatch) {
+            console.warn(`❌ Repair Charges mismatch for item ${index + 1}`);
+            console.log("API:", apiRepairCharge, "Row:", rowRepairCharges);
+          } else {
+            console.log(`✅ Repair Charges matched for item ${index + 1}`);
+          }
+
+          if (mismatches[index].aaMismatch) {
+            console.warn(`❌ AA Number mismatch for item ${index + 1}`);
+            console.log("API:", apiAANumber, "Row:", rowAANumbers);
+          } else {
+            console.log(`✅ AA Number matched for item ${index + 1}`);
+          }
+
+          if (mismatches[index].sellingPartnerMismatch) {
+            console.warn(`❌ Selling Partner mismatch for item ${index + 1}`);
+            console.log("API:", apiSellingPartner, "Row:", rowSellingPartner);
+          } else {
+            console.log(`✅ Selling Partner matched for item ${index + 1}`);
+          }
+        });
+
+        setApiData(items);
+        setMismatchData(mismatches);
+      })
+      .catch((error) => {
+        console.error("Error fetching API data:", error);
+        setApiData([]);
+        setMismatchData({});
+      })
+      .finally(() => setLoading(false));
+  };
+
+  const handleDelete = (batchToDelete) => {
+    setBatches((prev) => prev.filter((batch) => batch !== batchToDelete));
+  };
+
+  const handleChange = (event) => {
+    setStatus(event.target.value);
+  };
+
   const StatusCell = ({ initialStatus }) => {
     const [status, setStatus] = React.useState(initialStatus);
 
@@ -138,7 +256,6 @@ const ValidateCases = () => {
         </span>
       ),
     },
-
     {
       name: "Select",
       cell: (row) => (
@@ -148,9 +265,6 @@ const ValidateCases = () => {
             row.invoiceStatus === "Batch Created" ||
             row.invoiceStatus === "Invoice Uploaded"
           }
-          // checked={selectedBatches.some(
-          //   (batch) => batch.batchNo === row.batchNo
-          // )}
           checked={selectedBatches.some(
             (batch) =>
               `${batch.batchNo}-${batch.invoiceNo}` ===
@@ -167,9 +281,6 @@ const ValidateCases = () => {
                     `${row.batchNo}-${row.invoiceNo}`
                 )
               );
-              // setSelectedBatches((prev) =>
-              //   prev.filter((batch) => batch.batchNo !== row.batchNo)
-              // );
             }
           }}
           className="form-check-input"
@@ -177,28 +288,25 @@ const ValidateCases = () => {
       ),
       ignoreRowClick: true,
     },
-
     { name: "Batch No", selector: (row) => row.batchNo },
-    { name: "Vendor Name", selector: (row) => row.vendorName, width: "150px" }, // Fixed to match the correct field name
+    { name: "Vendor Name", selector: (row) => row.vendorName, width: "150px" },
     {
       name: "Approval Date",
-      selector: (row) => dayjs(row.approvalDate).format("DD-MM-YYYY"), // Format the date
+      selector: (row) => dayjs(row.approvalDate).format("DD-MM-YYYY"),
       width: "150px",
     },
-
     { name: "Case Count", selector: (row) => row.caseCount, width: "150px" },
-    { name: "Invoice No", selector: (row) => row.invoiceNo, width: "150px" }, // Fixed
+    { name: "Invoice No", selector: (row) => row.invoiceNo, width: "150px" },
     {
       name: "Invoice Date",
       selector: (row) => row.invoiceDate,
       width: "150px",
-    }, // Fixed
+    },
     {
       name: "Invoice Amount",
       selector: (row) => row.invoiceAmount,
       width: "150px",
-    }, // Fixed
-
+    },
     {
       name: "Reimbursement",
       selector: (row) => row.totalServiceCharges,
@@ -209,12 +317,11 @@ const ValidateCases = () => {
       selector: (row) => row.totalRepairCharges,
       width: "150px",
     },
-  
     {
       name: "GST",
       selector: (row) => `${row.gst || "18"}%`,
       width: "150px",
-    }, // Fixed
+    },
     {
       name: "TDS",
       selector: (row) => `${row.tds || "2"}%`,
@@ -225,22 +332,11 @@ const ValidateCases = () => {
       selector: (row) => row.finalAmount,
       width: "150px",
     },
-    // {
-    //   name: "Service Charges ",
-    //   selector: (row) => row.serviceCharges,
-    //   width: "150px",
-    // },
-    // {
-    //   name: "Total Service Charges",
-    //   selector: (row) => row.totalServiceCharges,
-    //   width: "200px",
-    // },
     {
       name: "Remarks",
       selector: (row) => row.remarks,
       width: "200px",
     },
-
     {
       name: "Invoice",
       selector: (row) => row.invoice,
@@ -275,37 +371,8 @@ const ValidateCases = () => {
       ),
       width: "180px",
     },
-
-    // {
-    //   name: "Finance Status",
-    //   cell: (row, index) => (
-    //     <select
-    //       style={{
-    //         padding: "6px 10px",
-    //         borderRadius: "30px",
-    //         border: "1px solid #ccc",
-    //         backgroundColor: "#f9f9f9",
-    //         width: "140px",
-    //       }}
-    //     >
-    //       <option value="Not Submitted">Not Submitted</option>
-    //       <option value="Submitted">Submitted</option>
-    //       <option value="Approved">Validated</option>
-    //       <option value="Rejected">Rejected</option>
-    //       <option value="Rejected">Query</option>
-    //       <option value="Rejected">Payment Scheduled</option>
-    //       <option value="Rejected">Payment Hold</option>
-    //       <option value="Rejected">Partial Payment</option>
-    //       <option value="Rejected">Paid</option>
-    //       <option value="Rejected">Bank Reject</option>
-    //     </select>
-    //   ),
-    //   width: "180px",
-    // },
   ];
-  // console.log("selected", selectedBatches);
 
-  // Apply filters whenever filters or original data changes
   const [filters, setFilters] = useState({
     vendorName: "",
     invoiceNo: "",
@@ -315,9 +382,6 @@ const ValidateCases = () => {
 
   const [filteredData, setFilteredData] = useState([]);
   useEffect(() => {
-    // console.log("Raw data:", data);
-    // console.log("Current filters:", filters);
-
     const filtered = data.filter((item) => {
       const matchesVendor = item.vendorName
         ?.toLowerCase()
@@ -329,7 +393,6 @@ const ValidateCases = () => {
         ?.toLowerCase()
         .includes(filters.batchNo.toLowerCase());
 
-      // Date comparison logic
       let matchesDate = true;
       if (filters.filterDate) {
         const itemDate = dayjs(item.approvalDate);
@@ -349,6 +412,7 @@ const ValidateCases = () => {
       [name]: value,
     }));
   };
+
   const handleDateChange = (date) => {
     setFilters((prev) => ({
       ...prev,
@@ -356,7 +420,6 @@ const ValidateCases = () => {
     }));
   };
 
-  console.log("this is selected row", selectedRow);
   const customerNames = selectedRow?.customerName?.split(",") || [];
   const aaNos = selectedRow?.aaNo?.split(",") || [];
   const imeis = selectedRow?.imeiNo?.split(",") || [];
@@ -366,8 +429,7 @@ const ValidateCases = () => {
   const repairs = selectedRow?.repairCharges?.split(",") || [];
   const serviceCharges = selectedRow?.serviceCharges?.split(",") || [];
   const gstCharges = selectedRow?.chargesInclGST?.split(",") || [];
-  const grossAmount = selectedRow?.grossAmount?.split(",") || [];
-  console.table("name", customerNames);
+  const grossAmounts = selectedRow?.grossAmount?.split(",") || [];
   const maxLength = Math.max(
     customerNames.length,
     aaNos.length,
@@ -378,14 +440,14 @@ const ValidateCases = () => {
     repairs.length,
     serviceCharges.length,
     gstCharges.length,
-    grossAmount.length
+    grossAmounts.length
   );
 
   return (
     <>
       <ToastContainer />
       <div className="container p-3 bg-white border rounded">
-        <h4 className="mb-0">Validated Cases</h4>
+        <h4 className="mb-0">Schedule Cases</h4>
 
         <Box
           mb={3}
@@ -396,21 +458,8 @@ const ValidateCases = () => {
           }}
         >
           <h5 className="mb-0"></h5>
-
           <div>
-            {/* <Button
-              sx={{
-                background: "#7E00D1",
-
-                "&:hover": {
-                  background: "#7E00D1",
-                },
-              }}
-              variant="contained"
-              startIcon={<UploadFileIcon />}
-            >
-              Batch Schedule
-            </Button> */}
+        
           </div>
         </Box>
 
@@ -526,7 +575,7 @@ const ValidateCases = () => {
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {selectedBatches.map((batch, index) => (
             <Chip
-              key={`${batch.batchNo}-${index}`} // Using index as fallback in case batchNo is not unique
+              key={`${batch.batchNo}-${index}`}
               label={`Batch ${batch.batchNo}`}
               onDelete={() => {
                 setSelectedBatches(
@@ -551,54 +600,12 @@ const ValidateCases = () => {
           Submit
         </Button>
       </Box>
-      {/* <Box
-        sx={{
-          display: selectedBatches.length > 0 ? "flex" : "none",
-          alignItems: "center",
-          justifyContent: "space-between",
-          border: "1px solid #A855F7",
-          borderRadius: 2,
-          p: 1.5,
-          backgroundColor: "#F9FAFB",
-          width: "100%",
-          maxWidth: 1200,
-          mt: 2,
-        }}
-      >
-        <Box sx={{ display: "flex", gap: 1 }}>
-          {selectedBatches.map((batch) => (
-            <Chip
-              key={batch.id}
-              label={`Batch${batch.batchNo}`}
-              onDelete={() => {
-                setSelectedBatches(
-                  selectedBatches.filter((b) => b.id !== batch.id)
-                );
-              }}
-              sx={{ backgroundColor: "#F5EFFF", color: "#000" }}
-            />
-          ))}
-        </Box>
-        <Button
-          onClick={() =>
-            navigate("/finalPayment", { state: { selectedBatches } })
-          }
-          variant="contained"
-          sx={{
-            backgroundColor: "#8000EA",
-            textTransform: "none",
-            "&:hover": { backgroundColor: "#6900c7" },
-          }}
-        >
-          Submit
-        </Button>
-      </Box> */}
 
       <Dialog
         open={openBox}
         onClose={handleCloseDialog}
         fullWidth
-        maxWidth="md"
+        maxWidth="lg"
       >
         <DialogTitle
           sx={{
@@ -610,64 +617,210 @@ const ValidateCases = () => {
           }}
         >
           {selectedRow?.batchNo ? `Batch No: ${selectedRow.batchNo}` : ""}
-          <a
-            href={selectedRow?.invoice}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ textDecoration: "none" }}
-          >
-            <PictureAsPdfIcon
-              sx={{ color: "red", fontSize: "28px", cursor: "pointer" }}
-            />
-          </a>
+          {selectedRow?.invoice ? (
+            <a
+              href={selectedRow.invoice}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: "none" }}
+            >
+              <PictureAsPdfIcon
+                sx={{ color: "red", fontSize: "28px", cursor: "pointer" }}
+              />
+            </a>
+          ) : (
+            <span style={{ color: "gray", fontSize: "14px" }}>No Invoice</span>
+          )}
         </DialogTitle>
 
         <DialogContent>
           <Table>
-          <TableHead>
-  <TableRow>
-    {[
-      "View",
-      "Customer Name",
-      "IMEI No",
-      "Service Type",
-      "Brand",
-      "Model",
-      "Repair Charges",
-      "Service Charges",
-    ].map((heading, index) => (
-      <TableCell
-        key={index}
-        style={{ whiteSpace: "nowrap" }} // 👈 prevents wrapping
-      >
-        {heading}
-      </TableCell>
-    ))}
-  </TableRow>
-</TableHead>
-
-            <TableBody>
-              {[...Array(maxLength)].map((_, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <RemoveRedEyeIcon
-                      style={{ cursor: "pointer", color: "#7E00D1" }}
-                      onClick={() =>navigate("/allDetails", {state: { aaNumber: aaNos[index] },})}/>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: "#EBF3FF" }}>
+                {[
+                  "View",
+                  "AA No",
+                  "IMEI No",
+                  "Creation Date",
+                  "Closur Date",
+                  "Customer Name",
+                  "Service Type",
+                  "Selling Partner",
+                  "Brand",
+                  "Model",
+                  "Repair Charges",
+                  "Service Charges",
+                  "Total",
+                  "Invoice Status",
+                  "Mismatched Data",
+                  "Remarks",
+                  "Remark File",
+                ].map((heading, index) => (
+                  <TableCell
+                    key={index}
+                    style={{ whiteSpace: "nowrap", fontWeight: "bold" }}
+                  >
+                    {heading}
                   </TableCell>
-                  <TableCell>{customerNames[index] || "-"}</TableCell>
-                  <TableCell>{imeis[index] || "-"}</TableCell>
-                  <TableCell>{serviceTypes[index] || "-"}</TableCell>
-                  <TableCell>{brands[index] || "-"}</TableCell>
-                  <TableCell>{models[index] || "-"}</TableCell>
-                  <TableCell>{repairs[index] || "-"}</TableCell>
-                  <TableCell>{serviceCharges[index] || "-"}</TableCell>
-                </TableRow>
-              ))}
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {[...Array(maxLength)].map((_, index) => {
+                const mismatch = mismatchData[index] || {};
+                const isAAMismatch = mismatch.aaMismatch;
+                const isOtherMismatch =
+                  mismatch.serviceMismatch ||
+                  mismatch.repairMismatch ||
+                  mismatch.sellingPartnerMismatch;
+                const allMatch =
+                  !mismatch.aaMismatch &&
+                  !mismatch.serviceMismatch &&
+                  !mismatch.repairMismatch &&
+                  !mismatch.sellingPartnerMismatch;
+
+                const rowStyle = isAAMismatch
+                  ? { backgroundColor: "#f8d7da" } // Red for AA mismatch
+                  : isOtherMismatch
+                  ? { backgroundColor: "#fff9e6" } // Yellow for other mismatches
+                  : { backgroundColor: "#e6f4ea" }; // Green for all matches
+
+                const mismatchDetails = [
+                  {
+                    field: "AA Number",
+                    excel: mismatch.rowData?.aaNumber || "-",
+                    system: mismatch.apiData?.aaNumber || "-",
+                    hasMismatch: mismatch.aaMismatch,
+                  },
+                  {
+                    field: "Service Charges",
+                    excel: mismatch.rowData?.serviceCharge || "-",
+                    system: mismatch.apiData?.serviceCharge || "-",
+                    hasMismatch: mismatch.serviceMismatch,
+                  },
+                  {
+                    field: "Repair Charges",
+                    excel: mismatch.rowData?.repairCharge || "-",
+                    system: mismatch.apiData?.repairCharge || "-",
+                    hasMismatch: mismatch.repairMismatch,
+                  },
+                  {
+                    field: "Selling Partner",
+                    excel: mismatch.rowData?.sellingPartner || "-",
+                    system: mismatch.apiData?.sellingPartner || "-",
+                    hasMismatch: mismatch.sellingPartnerMismatch,
+                  },
+                ].filter((detail) => detail.hasMismatch);
+
+                return (
+                  <TableRow key={index} sx={rowStyle}>
+                    <TableCell>
+                      <RemoveRedEyeIcon
+                        style={{ cursor: "pointer", color: "#7E00D1" }}
+                        onClick={() =>
+                          navigate("/allDetails", {
+                            state: { aaNumber: aaNos[index] },
+                          })
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>{aaNos[index] || "-"}</TableCell>
+                    <TableCell>{imeis[index] || "-"}</TableCell>
+                    <TableCell>
+                      {selectedRow?.creationDate
+                        ? dayjs(selectedRow.creationDate).format("DD-MM-YYYY")
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {selectedRow?.closurDate
+                        ? dayjs(selectedRow.closurDate).format("DD-MM-YYYY")
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{customerNames[index] || "-"}</TableCell>
+                    <TableCell>{serviceTypes[index] || "-"}</TableCell>
+                    <TableCell>{selectedRow?.sellingPartner || "-"}</TableCell>
+                    <TableCell>{brands[index] || "-"}</TableCell>
+                    <TableCell>{models[index] || "-"}</TableCell>
+                    <TableCell>{repairs[index] || "-"}</TableCell>
+                    <TableCell>{serviceCharges[index] || "-"}</TableCell>
+                    <TableCell>{grossAmounts[index] || "-"}</TableCell>
+                    <TableCell>{selectedRow?.invoiceStatus || "-"}</TableCell>
+                    <TableCell style={{ position: "relative", cursor: "pointer" }}>
+                      {mismatchDetails.length > 0 ? (
+                        <Tooltip
+                          title={
+                            <div>
+                              <table
+                                className="table table-sm table-bordered mb-0"
+                                style={{
+                                  backgroundColor: "#fff9c4",
+                                  minWidth: "320px",
+                                }}
+                              >
+                                <thead>
+                                  <tr>
+                                    <th style={{ fontWeight: "bold" }}>Field</th>
+                                    <th style={{ fontWeight: "bold" }}>System Data</th>
+                                    <th style={{ fontWeight: "bold" }}>Server Data</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {mismatchDetails.map((detail, idx) => (
+                                    <tr key={idx}>
+                                      <td>{detail.field}</td>
+                                      <td>{detail.excel}</td>
+                                      <td>{detail.system}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          }
+                          placement="top"
+                          arrow
+                          componentsProps={{
+                            tooltip: {
+                              sx: {
+                                backgroundColor: "#fff9c4",
+                                color: "black",
+                                boxShadow: 3,
+                                fontSize: 12,
+                                maxWidth: 400,
+                                padding: "8px",
+                              },
+                            },
+                          }}
+                        >
+                          <span style={{ color: "black", fontWeight: "bold" }}>
+                            Mismatches
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>{selectedRow?.remarks || "-"}</TableCell>
+                    <TableCell>
+                      {selectedRow?.remarkFile ? (
+                        <a
+                          href={selectedRow.remarkFile}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <PictureAsPdfIcon sx={{ color: "red" }} />
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
             <Button variant="outlined">
-              Total Amount :{selectedRow?.finalAmount}
+              Total Amount: {selectedRow?.finalAmount}
             </Button>
           </Box>
         </DialogContent>
@@ -698,6 +851,7 @@ const customStyles = {
     },
   },
 };
+
 const spinner = {
   position: "absolute",
   top: "50%",

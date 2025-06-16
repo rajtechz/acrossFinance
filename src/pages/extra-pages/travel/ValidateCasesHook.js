@@ -32,9 +32,7 @@ const ValidateCasesHook = () => {
   const handleRowClick = (row) => {
     setOpenBox(true);
     setSelectedRow(row);
-    // navigate("/allDetails", {
-    //   state: { aaNumber: row.aA_Number },
-    // });
+   
   };
   const handleOpenDialog = () => setOpenBox(true);
   const handleCloseDialog = () => {
@@ -59,6 +57,9 @@ const ValidateCasesHook = () => {
     setOpenBox,
     handleUploadUtr,
     handleOpenDialog,
+    setLoading,
+    navigate,
+    loading 
   };
 };
 

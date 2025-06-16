@@ -57,6 +57,7 @@ const ReviewBatchHook = () => {
     setOpenBox,
     handleUploadUtr,
     handleOpenDialog,
+    setLoading,
   };
 };
 

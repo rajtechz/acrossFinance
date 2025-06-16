@@ -16,7 +16,7 @@ const ReviewBatches = {
   children: [
     {
       id: "ReviewBatches",
-      title: "New  Batches",
+      title: "Pending validation",
       type: "item",
       url: "/reviewBatches",
       icon: icons.DashboardOutlinedIcon,
