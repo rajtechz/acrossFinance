@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -122,7 +119,11 @@ function FinalPayment() {
         selectedBatches.map((batch) => ({
           ...batch,
           selected: true,
-          partialPaid: "",
+          partialPaid: batch.partialPaid || "0.00",
+          totalRepairCharges: batch.totalRepairCharges || "0.00",
+          totalServiceCharges: batch.totalServiceCharges || "0.00",
+          gst: batch.gst || "0",
+          tds: batch.tds || "0",
           selectedAaNos: batch.aaNo
             ? batch.aaNo.split(",").map((s) => s.trim()).slice(0, batch.caseCount || 0)
             : [],
@@ -657,9 +658,9 @@ function FinalPayment() {
                 </TableCell>
                 <TableCell>{gstRate > 0 ? `${gstRate}%` : "0%"}</TableCell>
                 <TableCell>
-                  {tdsRate > 0 ? `${tdsRate}%` : "—"}
+                  {tdsRate > 0 ? `${tdsRate}%` : "0%"}
                 </TableCell>
-                <TableCell>{payable.toFixed(2) || "—"}</TableCell>
+                <TableCell>{payable > 0 ? payable.toFixed(2) : "—"}</TableCell>
               </TableRow>
             );
           })}
@@ -739,9 +740,9 @@ function FinalPayment() {
                 </TableCell>
                 <TableCell>{gstRate > 0 ? `${gstRate}%` : "0%"}</TableCell>
                 <TableCell>
-                  {tdsRate > 0 ? `${tdsRate}%` : "—"}
+                  {tdsRate > 0 ? `${tdsRate}%` : "0%"}
                 </TableCell>
-                <TableCell>{payable.toFixed(2) || "—"}</TableCell>
+                <TableCell>{payable > 0 ? payable.toFixed(2) : "—"}</TableCell>
               </TableRow>
             );
           })}
@@ -768,7 +769,7 @@ function FinalPayment() {
           fontWeight: 600,
         }}
       >
-        Send for Final Payment
+        Schedule Payment
       </Typography>
 
       <Box
@@ -1003,14 +1004,6 @@ function FinalPayment() {
 
 export default FinalPayment;
 
-const buttonStyle = {
-  borderRadius: "8px",
-  borderColor: "#ccc",
-  textTransform: "none",
-  fontWeight: 500,
-  width: "100%",
-  justifyContent: "flex-start",
-};
 
 const customStyles = {
   headRow: {

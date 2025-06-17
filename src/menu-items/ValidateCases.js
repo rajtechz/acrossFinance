@@ -16,7 +16,7 @@ const ValidateCases = {
   children: [
     {
       id: "validateCases",
-      title: "Schedule Cases",
+      title: "Scheduled Cases",
       type: "item",
       url: "/validateCases",
       icon: icons.DashboardOutlinedIcon,

@@ -78,6 +78,7 @@ const ReviewBatch = () => {
     handleOpenDialog,
   } = ReviewBatchHook();
 
+ 
   const handleRowClick = (row, action = "view") => {
     console.log("onclick eye button service charge", row.serviceCharges);
     console.log("onclick eye button repair charge", row.repairCharges);
@@ -111,14 +112,15 @@ const ReviewBatch = () => {
         const rowServiceCharges = row.serviceCharges
           ?.split(",")
           .map((val) => parseFloat(val.trim()));
-
         const rowRepairCharges = row.repairCharges
           ?.split(",")
           .map((val) => parseFloat(val.trim()));
-
         const rowAANumbers = row.aaNo?.split(",").map((val) => val.trim());
-
-        const rowSellingPartner = row.sellingPartner?.trim().toLowerCase();
+        // Split sellingPartner into an array
+        const rowSellingPartners =
+          row.sellingPartner
+            ?.split(",")
+            .map((val) => val.trim().toLowerCase()) || [];
 
         const mismatches = {};
 
@@ -136,12 +138,13 @@ const ReviewBatch = () => {
               (val) => Math.abs(val - apiRepairCharge) < 0.01
             ),
             aaMismatch: !rowAANumbers?.includes(apiAANumber),
-            sellingPartnerMismatch: apiSellingPartner !== rowSellingPartner,
+            sellingPartnerMismatch:
+              rowSellingPartners[index] !== apiSellingPartner,
             rowData: {
               serviceCharge: rowServiceCharges ? rowServiceCharges[index] : "-",
               repairCharge: rowRepairCharges ? rowRepairCharges[index] : "-",
               aaNumber: rowAANumbers ? rowAANumbers[index] : "-",
-              sellingPartner: rowSellingPartner || "-",
+              sellingPartner: rowSellingPartners[index] || "-",
             },
             apiData: {
               serviceCharge: apiServiceCharge || "-",
@@ -175,7 +178,12 @@ const ReviewBatch = () => {
 
           if (mismatches[index].sellingPartnerMismatch) {
             console.warn(`❌ Selling Partner mismatch for item ${index + 1}`);
-            console.log("API:", apiSellingPartner, "Row:", rowSellingPartner);
+            console.log(
+              "API:",
+              apiSellingPartner,
+              "Row:",
+              rowSellingPartners[index]
+            );
           } else {
             console.log(`✅ Selling Partner matched for item ${index + 1}`);
           }
@@ -191,6 +199,12 @@ const ReviewBatch = () => {
       })
       .finally(() => setLoading(false));
   };
+
+  // Define sellingPartners array
+  // const sellingPartners =
+  //   selectedViewRow?.sellingPartner
+  //     ?.split(",")
+  //     .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
 
   const getColorStyles = (status) => {
     switch (status) {
@@ -257,75 +271,99 @@ const ReviewBatch = () => {
     }
   };
 
+
+    const safeNumber = (value) => {
+        const num = parseFloat(value);
+        return isNaN(num) ? 0 : num;
+      };
+
+
   const handleValidate = async (rowData) => {
-    console.log("Validating row data:", rowData);
-    try {
-      const formData = new FormData();
-      formData.append("AANo", rowData?.aaNo || "");
-      formData.append("BatchNo", rowData?.batchNo || "");
-      formData.append("VendorName", rowData?.vendorName || "");
-      formData.append("ApprovalDate", rowData?.creationDate || "");
-      formData.append("CaseCount", rowData?.caseCount || "");
-      formData.append("InvoiceNo", rowData?.invoiceNo || "");
-      formData.append("InvoiceDate", rowData?.invoiceDate || "");
-      formData.append("InvoiceAmount", rowData?.invoiceAmount || "");
-      formData.append("Reimbursement", rowData?.reimbursement || "");
-      formData.append("Expense", rowData?.expense || "");
-      formData.append("GST", rowData?.gst || "");
-      formData.append("TDS", rowData?.tds || "");
-      formData.append("FinalAmount", rowData?.finalAmount || "");
-      formData.append("Invoice", rowData?.invoice || "");
-      formData.append("InvoiceStatus", rowData?.invoiceStatus || "");
-      formData.append("FinanceStatus", rowData?.financeStatus || "Validated");
-      formData.append("CustomerName", rowData?.customerName || "");
-      formData.append("IMEINo", rowData?.imeiNo || "");
-      formData.append("ServiceType", rowData?.serviceType || "");
-      formData.append("Brand", rowData?.brand || "");
-      formData.append("MakeModel", rowData?.makeModel || "");
-      formData.append("RepairCharges", rowData?.repairCharges || "");
-      formData.append("ServiceCharges", rowData?.serviceCharges || "");
-      formData.append(
-        "TotalServiceCharges",
-        rowData?.totalServiceCharges || ""
-      );
-      formData.append("TotalRepairCharges", rowData?.totalRepairCharges || "");
-      formData.append("ChargesInclGST", rowData?.chargesInclGST || "");
-      formData.append("GrossAmount", rowData?.grossAmount || "");
-      formData.append("Total", rowData?.total || "");
-      formData.append("Remarks", rowData?.remarks || "");
-      formData.append("SelectedService", rowData?.selectedService || "");
-      formData.append("SellingPartner", rowData?.sellingPartner || "");
-      const response = await fetch(`${baseURLProd}InsertValidateFinanceData`, {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) throw new Error("Validation failed");
-      return await response.json();
-    } catch (error) {
-      console.error("Error in handleValidate:", error);
-      throw error;
-    }
-  };
+  console.log("Validating row data service:", rowData.serviceCharges);
+  console.log("Validating row data repare:", rowData.repairCharges);
+  try {
+    const formData = new FormData();
+    formData.append("AANo", rowData?.aaNo || "");
+    formData.append("IMEINo", rowData?.imeiNo || "");
+    formData.append("CreationDate", rowData?.creationDate || "");
+    formData.append("ClosureDate", rowData?.closureDate || "");
+    formData.append("CustomerName", rowData?.customerName || "");
+    formData.append("ServiceType", rowData?.serviceType || "");
+    formData.append("Brand", rowData?.brand || "");
+    formData.append("MakeModel", rowData?.makeModel || "");
+    formData.append("BatchNo", rowData?.batchNo || "");
+    formData.append("VendorName", rowData?.vendorName || "");
+    // formData.append("Total", rowData?.total || "");
+    formData.append("CaseCount", rowData?.caseCount || "");
+    formData.append("InvoiceNo", rowData?.invoiceNo || "");
+    formData.append("InvoiceDate", rowData?.invoiceDate || "");
+    formData.append("InvoiceStatus", rowData?.invoiceStatus || "");
+    formData.append("SelectedService", rowData?.selectedService || "");
+    formData.append("Reimbursment", rowData?.reimbursement || "");
+    formData.append("Expense", rowData?.expense || "");
+    formData.append("Invoice", rowData?.invoice || "");
+    formData.append("FinanceStatus", rowData?.financeStatus || "");
+    formData.append("GrossAmount", rowData?.grossAmount || "");
+    formData.append("SellingPartner", rowData?.sellingPartner || "");
+    formData.append("RepairCharges", rowData?.repairCharges || "");
+    formData.append("ServiceCharges", rowData?.serviceCharges || "");
+    formData.append("GST", safeNumber(rowData?.gst));
+    formData.append("TDS", safeNumber(rowData?.tds));
+    formData.append("FinalAmount", safeNumber(rowData?.finalAmount));
+    formData.append("InvoiceAmount", safeNumber(rowData?.invoiceAmount));
+    formData.append(
+      "TotalRepairCharges",
+      safeNumber(rowData?.totalRepairCharges)
+    );
+    formData.append(
+      "TotalServiceCharges",
+      safeNumber(rowData?.totalServiceCharges)
+    );
+    formData.append("ChargesInclGST", safeNumber(rowData?.chargesInclGST));
+  
+
+
+    const cleanedRemarks = (rowData?.remarks || "")
+  .split(",")
+  .map((r) => r.trim())
+  .filter((r) => r)
+  .join(", ");
+formData.append("Remarks", cleanedRemarks || "N/A");
+
+    const response = await fetch(`${baseURLProd}InsertValidateFinanceData`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.ok) throw new Error("Validation failed");
+    return await response.json();
+  } catch (error) {
+    console.error("Error in handleValidate:", error);
+    throw error;
+  }
+};
+
+
   const handleSubmit = async (rowData, dialogData = {}) => {
     try {
+      const safeNumber = (value) => {
+        const num = parseFloat(value);
+        return isNaN(num) ? 0 : num;
+      };
+
       const formData = new FormData();
       formData.append("BatchNo", rowData?.batchNo || "");
       formData.append("AANo", rowData?.aaNo || "");
       formData.append("VendorName", rowData?.vendorName || "");
       formData.append("ApprovalDate", rowData?.creationDate || "");
       formData.append("InvoiceNo", rowData?.invoiceNo || "");
-      formData.append("InvoiceAmount", rowData?.invoiceAmount || 0);
+      // formData.append("InvoiceAmount", rowData?.invoiceAmount || 0);
       formData.append(
         "FinanceStatus",
         financeStatus || rowData?.FinanceStatus || ""
       );
       formData.append("CaseCount", rowData?.caseCount || 0);
       formData.append("InvoiceDate", rowData?.invoiceDate || "");
-      formData.append("Reimbursement", rowData?.reimbursement || 0);
-      formData.append("Expense", rowData?.expense || 0);
-      formData.append("GST", rowData?.gst || 0);
-      formData.append("TDS", rowData?.tds || 0);
-      formData.append("FinalAmount", rowData?.finalAmount || 0);
+      
       formData.append("Invoice", rowData?.invoice || "");
       formData.append("InvoiceStatus", rowData?.invoiceStatus || "");
       formData.append("Date", date || new Date().toISOString().split("T")[0]);
@@ -343,6 +381,23 @@ const ReviewBatch = () => {
       formData.append("Total", rowData?.total || "");
       formData.append("SelectedService", rowData?.selectedService || "");
       formData.append("SellingPartner", rowData?.sellingPartner || "");
+
+      // Updated payload to handle safe numbers
+
+      formData.append("GST", safeNumber(rowData?.gst));
+      formData.append("TDS", safeNumber(rowData?.tds));
+      formData.append("FinalAmount", safeNumber(rowData?.finalAmount));
+      formData.append("InvoiceAmount", safeNumber(rowData?.invoiceAmount));
+      formData.append("Expense", safeNumber(rowData?.expense));
+      formData.append("Reimbursement", safeNumber(rowData?.reimbursement));
+      formData.append(
+        "TotalRepairCharges",
+        safeNumber(rowData?.totalRepairCharges)
+      );
+      formData.append(
+        "TotalServiceCharges",
+        safeNumber(rowData?.totalServiceCharges)
+      );
 
       if (dialogData?.PDF_FileUpload) {
         formData.append("PDF_FileUpload", dialogData.PDF_FileUpload);
@@ -390,7 +445,7 @@ const ReviewBatch = () => {
       });
       setOpenBox(false);
       setCategoryError(false);
-      setCategory(""); // Reset category after submission
+      setCategory("");
     } catch (error) {
       console.error("Submission failed:", error);
     }
@@ -427,7 +482,6 @@ const ReviewBatch = () => {
     //   width: "150px",
     // },
 
-  
     {
       name: "Case Count",
       selector: (row) => row.caseCount || "--",
@@ -650,60 +704,87 @@ const ReviewBatch = () => {
       filterDate: date,
     }));
   };
+// Existing arrays
+const customerNames =
+  selectedViewRow?.customerName
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const aaNos =
+  selectedViewRow?.aaNo
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const imeis =
+  selectedViewRow?.imeiNo
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const serviceTypes =
+  selectedViewRow?.serviceType
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const brands =
+  selectedViewRow?.brand
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const models =
+  selectedViewRow?.makeModel
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const repairs =
+  selectedViewRow?.repairCharges
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const serviceCharges =
+  selectedViewRow?.serviceCharges
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const gstCharges =
+  selectedViewRow?.chargesInclGST
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const grossAmounts =
+  selectedViewRow?.total
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
+const sellingPartners =
+  selectedViewRow?.sellingPartner
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" ? "-" : item.trim())) || [];
 
-  const customerNames =
-    selectedViewRow?.customerName
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
-  const aaNos =
-    selectedViewRow?.aaNo
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
-  const imeis =
-    selectedViewRow?.imeiNo
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
-  const serviceTypes =
-    selectedViewRow?.serviceType
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
-  const brands =
-    selectedViewRow?.brand
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
-  const models =
-    selectedViewRow?.makeModel
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
-  const repairs =
-    selectedViewRow?.repairCharges
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
-  const serviceCharges =
-    selectedViewRow?.serviceCharges
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
-  const gstCharges =
-    selectedViewRow?.chargesInclGST
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
-  const grossAmounts =
-    selectedViewRow?.total
-      ?.split(",")
-      .map((item) => (item === "NULL" ? "-" : item)) || [];
+// Add remarks array
+const remarksArray =
+  selectedViewRow?.remarks
+    ?.split(",")
+    .map((item) => (item.trim() === "NULL" || item.trim() === "" ? "-" : item.trim())) || [];
+
+  // const maxLength = Math.max(
+  //   customerNames.length,
+  //   aaNos.length,
+  //   imeis.length,
+  //   serviceTypes.length,
+  //   brands.length,
+  //   models.length,
+  //   repairs.length,
+  //   serviceCharges.length,
+  //   gstCharges.length,
+  //   grossAmounts.length,
+  //   sellingPartners.length // Add sellingPartners to maxLength calculation
+  // );
+
+
   const maxLength = Math.max(
-    customerNames.length,
-    aaNos.length,
-    imeis.length,
-    serviceTypes.length,
-    brands.length,
-    models.length,
-    repairs.length,
-    serviceCharges.length,
-    gstCharges.length,
-    grossAmounts.length
-  );
-
+  customerNames.length,
+  aaNos.length,
+  imeis.length,
+  serviceTypes.length,
+  brands.length,
+  models.length,
+  repairs.length,
+  serviceCharges.length,
+  gstCharges.length,
+  grossAmounts.length,
+  sellingPartners.length,
+  remarksArray.length // Add remarksArray to maxLength calculation
+);
   const handleChangePage = (_, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -1094,7 +1175,8 @@ const ReviewBatch = () => {
                   ))}
                 </TableRow>
               </TableHead>
-              <TableBody>
+
+              {/* <TableBody>
                 {Array.from(
                   { length: rowsPerPage },
                   (_, i) => i + page * rowsPerPage
@@ -1164,13 +1246,11 @@ const ReviewBatch = () => {
                           {selectedViewRow?.creationDate || "-"}
                         </TableCell>
                         <TableCell>
-                          {selectedViewRow?.closurDate || "-"}
+                          {selectedViewRow?.closureDate || "-"}
                         </TableCell>
                         <TableCell>{customerNames[index] || "-"}</TableCell>
                         <TableCell>{serviceTypes[index] || "-"}</TableCell>
-                        <TableCell>
-                          {selectedViewRow?.sellingPartner || "-"}
-                        </TableCell>
+                        <TableCell>{sellingPartners[index] || "-"}</TableCell>
                         <TableCell>{brands[index] || "-"}</TableCell>
                         <TableCell>{models[index] || "-"}</TableCell>
                         <TableCell>{repairs[index] || "-"}</TableCell>
@@ -1261,15 +1341,183 @@ const ReviewBatch = () => {
                       </TableRow>
                     );
                   })}
-              </TableBody>
+              </TableBody> */}
+
+
+              <TableBody>
+  {Array.from(
+    { length: rowsPerPage },
+    (_, i) => i + page * rowsPerPage
+  )
+    .filter((i) => i < maxLength)
+    .map((index) => {
+      const mismatch = mismatchData[index] || {};
+      const isAAMismatch = mismatch.aaMismatch;
+      const isOtherMismatch =
+        mismatch.serviceMismatch ||
+        mismatch.repairMismatch ||
+        mismatch.sellingPartnerMismatch;
+      const allMatch =
+        !mismatch.aaMismatch &&
+        !mismatch.serviceMismatch &&
+        !mismatch.repairMismatch &&
+        !mismatch.sellingPartnerMismatch;
+
+      const rowStyle = isAAMismatch
+        ? { backgroundColor: "#f8d7da" } // Red for AA mismatch
+        : isOtherMismatch
+          ? { backgroundColor: "#fff9e6" } // Yellow for other mismatches
+          : { backgroundColor: "#e6f4ea" }; // Green for all matches
+
+      const mismatchDetails = [
+        {
+          field: "AA Number",
+          excel: mismatch.rowData?.aaNumber || "-",
+          system: mismatch.apiData?.aaNumber || "-",
+          hasMismatch: mismatch.aaMismatch,
+        },
+        {
+          field: "Service Charges",
+          excel: mismatch.rowData?.serviceCharge || "-",
+          system: mismatch.apiData?.serviceCharge || "-",
+          hasMismatch: mismatch.serviceMismatch,
+        },
+        {
+          field: "Repair Charges",
+          excel: mismatch.rowData?.repairCharge || "-",
+          system: mismatch.apiData?.repairCharge || "-",
+          hasMismatch: mismatch.repairMismatch,
+        },
+        {
+          field: "Selling Partner",
+          excel: mismatch.rowData?.sellingPartner || "-",
+          system: mismatch.apiData?.sellingPartner || "-",
+          hasMismatch: mismatch.sellingPartnerMismatch,
+        },
+      ].filter((detail) => detail.hasMismatch);
+
+      return (
+        <TableRow key={index} sx={rowStyle}>
+          <TableCell>
+            <RemoveRedEyeIcon
+              style={{ cursor: "pointer", color: "#7E00D1" }}
+              onClick={() =>
+                navigate("/allDetails", {
+                  state: { aaNumber: aaNos[index] },
+                })
+              }
+            />
+          </TableCell>
+          <TableCell>{aaNos[index] || "-"}</TableCell>
+          <TableCell>{imeis[index] || "-"}</TableCell>
+          <TableCell>
+            {selectedViewRow?.creationDate || "-"}
+          </TableCell>
+          <TableCell>
+            {selectedViewRow?.closureDate || "-"}
+          </TableCell>
+          <TableCell>{customerNames[index] || "-"}</TableCell>
+          <TableCell>{serviceTypes[index] || "-"}</TableCell>
+          <TableCell>{sellingPartners[index] || "-"}</TableCell>
+          <TableCell>{brands[index] || "-"}</TableCell>
+          <TableCell>{models[index] || "-"}</TableCell>
+          <TableCell>{repairs[index] || "-"}</TableCell>
+          <TableCell>{serviceCharges[index] || "-"}</TableCell>
+          <TableCell>{grossAmounts[index] || "-"}</TableCell>
+          <TableCell>
+            {selectedViewRow?.invoiceStatus || "-"}
+          </TableCell>
+          <TableCell
+            style={{ position: "relative", cursor: "pointer" }}
+          >
+            {mismatchDetails.length > 0 ? (
+              <>
+                <Tooltip
+                  title={
+                    <div>
+                      <table
+                        className="table table-sm table-bordered mb-0"
+                        style={{
+                          backgroundColor: "#fff9c4", // Custom yellow
+                        }}
+                      >
+                        <thead>
+                          <tr>
+                            <th style={{ fontWeight: "bold" }}>
+                              Field
+                            </th>
+                            <th style={{ fontWeight: "bold" }}>
+                              System Data
+                            </th>
+                            <th style={{ fontWeight: "bold" }}>
+                              Server Data
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {mismatchDetails.map((detail, idx) => (
+                            <tr key={idx}>
+                              <td>{detail.field}</td>
+                              <td>{detail.excel}</td>
+                              <td>{detail.system}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  }
+                  placement="top"
+                  arrow
+                  componentsProps={{
+                    tooltip: {
+                      sx: {
+                        backgroundColor: "#fff9c4", // Soft Yellow
+                        color: "black",
+                        boxShadow: 3,
+                        fontSize: 12,
+                        maxWidth: 400,
+                        padding: "8px",
+                      },
+                    },
+                  }}
+                >
+                  <span
+                    style={{ color: "black", fontWeight: "bold" }}
+                  >
+                    Mismatches
+                  </span>
+                </Tooltip>
+              </>
+            ) : (
+              "-"
+            )}
+          </TableCell>
+          <TableCell>{remarksArray[index] || "-"}</TableCell> {/* Updated to use remarksArray */}
+          <TableCell>
+            {selectedViewRow?.remarkFile ? (
+              <a
+                href={selectedViewRow.remarkFile}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <PictureAsPdfIcon sx={{ color: "red" }} />
+              </a>
+            ) : (
+              "-"
+            )}
+          </TableCell>
+        </TableRow>
+      );
+    })}
+</TableBody>
             </Table>
           </Box>
           <Box
             sx={{
-              position: "absolute",
+           
               bottom: 16,
               right: 24,
-              backgroundColor: "white",
+           
               zIndex: 10,
             }}
           >
