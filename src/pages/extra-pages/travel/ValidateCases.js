@@ -1201,7 +1201,24 @@ const ValidateCases = () => {
       ),
       ignoreRowClick: true,
     },
-    { name: "Batch No", selector: (row) => row.batchNo },
+  {
+    name: "Batch No",
+    selector: (row) => row.batchNo,
+    cell: (row) => (
+      <span
+        style={{
+          backgroundColor: row.remarks && row.remarks !== "--" ? "#fff9e6" : "#e6f4ea", // Yellow if remarks exist, green if no remarks
+          padding: "4px 8px",
+          borderRadius: "4px",
+          display: "inline-block",
+          width: "100%",
+          textAlign: "center",
+        }}
+      >
+        {row.batchNo}
+      </span>
+    ),
+  },
     { name: "Vendor Name", selector: (row) => row.vendorName, width: "150px" },
     {
       name: "Approval Date",
@@ -1823,6 +1840,7 @@ const ValidateCases = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
     </>
   );
 };

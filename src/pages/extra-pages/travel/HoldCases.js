@@ -158,32 +158,21 @@ const HoldCases = () => {
       selector: (row) => row.invoiceAmount,
       width: "150px",
     },
-    // {
-    //   name: "Reimbursement",
-    //   selector: (row) => row.reimbursement,
-    //   width: "150px",
-    // },
-    {
-      name: "Expense",
-      selector: (row) => {
-        if (!row.grossAmount || row.grossAmount === "--") return "--";
-
-        // Remove any non-digit characters (except commas) and split by comma
-        const amounts = row.grossAmount.replace(/[^\d,]/g, "").split(",");
-
-        // Convert to numbers and sum them up
-        const sum = amounts.reduce((total, amount) => {
-          const num = parseFloat(amount) || 0;
-          return total + num;
-        }, 0);
-
-        return sum.toLocaleString(); // Format with commas if needed
-      },
+     {
+      name: "Total Service Charges",
+      selector: (row) => row.totalServiceCharges || "--",
       width: "150px",
     },
-    { name: "GST", selector: (row) => `${row.gst}%`, width: "150px" },
+    {
+      name: "Total Repair Charges",
+      selector: (row) => row.totalRepairCharges || "--",
+      width: "200px",
+    },
+
+   
+    // { name: "GST", selector: (row) => `${row.gst}%`, width: "150px" },
     // { name: "TDS", selector: (row) => row.tds, width: "150px" },
-    { name: "Payable", selector: (row) => row.finalAmount, width: "150px" },
+    { name: "Final Amount", selector: (row) => row.finalAmount, width: "150px" },
     {
       name: "Invoice",
       selector: (row) => row.invoice,
@@ -199,16 +188,7 @@ const HoldCases = () => {
       width: "150px",
     },
       
-    {
-      name: "Service Charges",
-      selector: (row) => row.serviceCharges || "--",
-      width: "150px",
-    },
-    {
-      name: "Total Service Charges",
-      selector: (row) => row.totalServiceCharges || "--",
-      width: "200px",
-    },
+   
     {
       name: "Hold DOC",
       selector: (row) => row.pdF_FileUpload,

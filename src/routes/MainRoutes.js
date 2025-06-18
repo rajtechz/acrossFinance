@@ -6,6 +6,7 @@ import ClaimDetailpage from "pages/extra-pages/travel/claimdetailpage";
 import DashboardAdmin from "pages/extra-pages/travel/DashboardAdmin";
 import FinalPayment from "pages/extra-pages/travel/FinalPayment";
 import FullPayment from "pages/extra-pages/travel/FullPayment";
+import GSTHoldCases from "pages/extra-pages/travel/GSTHoldCases";
 import HoldCases from "pages/extra-pages/travel/HoldCases";
 import PartialPayment from "pages/extra-pages/travel/PartialPayment";
 import PaymentHistory from "pages/extra-pages/travel/PaymentHistory";
@@ -51,6 +52,10 @@ const MainRoutes = {
     {
       path: "fullPayment",
       element: <FullPayment />,
+    },
+    {
+      path: "GSTHoldCases",
+      element: <GSTHoldCases />,
     },
     {
       path: "/finalPayment",

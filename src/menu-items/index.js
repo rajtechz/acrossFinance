@@ -17,6 +17,7 @@ import FullPayment from "./FullPayment";
 import BankReject from "./BankReject";
 import PaymentHistory from "./PaymentHistory";
 import holdCases from "./HoldCases";
+import GSTHoldCases from "./GSTHoldCases";
 const getRoleFromStorage = () => {
   return localStorage.getItem("ROLE");
 };
@@ -54,6 +55,7 @@ const useMenuItems = () => {
         PaymentScheduled,
         PartialPayment,
         FullPayment,
+        GSTHoldCases,
         BankReject,
         PaymentHistory,
         //  VendorList,

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -251,11 +250,23 @@ function FinalPayment() {
       ignoreRowClick: true,
     },
     {
-      name: "Batch No",
-      selector: (row) => row.batchNo || "—",
-      sortable: true,
-      width: "120px",
-    },
+    name: "Batch No",
+    selector: (row) => row.batchNo,
+    cell: (row) => (
+      <span
+        style={{
+          backgroundColor: row.remarks && row.remarks !== "--" ? "#fff9e6" : "#e6f4ea", // Yellow if remarks exist, green if no remarks
+          padding: "4px 8px",
+          borderRadius: "4px",
+          display: "inline-block",
+          width: "100%",
+          textAlign: "center",
+        }}
+      >
+        {row.batchNo}
+      </span>
+    ),
+  },
     {
       name: "Vendor Name",
       selector: (row) => row.vendorName || "—",
@@ -675,6 +686,11 @@ function FinalPayment() {
       return acc + payable;
     }, 0);
 
+  const totalFinalAmount = selectedRows
+    .filter((row) => row.selected)
+    .reduce((acc, curr) => acc + Number(curr.finalAmount || 0), 0)
+    .toFixed(2);
+
   const PaymentTable = () => (
     <Table sx={{ minWidth: 650, border: "1px solid #ddd" }}>
       <TableHead>
@@ -757,13 +773,13 @@ function FinalPayment() {
                   {tdsAmount > 0 ? tdsAmount.toFixed(2) : "0.00"}
                 </TableCell>
                 <TableCell>{payable > 0 ? payable.toFixed(2) : "—"}</TableCell>
-                 <TableCell>{row.finalAmount || "—"}</TableCell>
+                <TableCell>{row.finalAmount || "—"}</TableCell>
               </TableRow>
             );
           })}
         {selectedRows.filter((row) => row.selected).length === 0 && (
           <TableRow>
-            <TableCell colSpan={6} align="center">
+            <TableCell colSpan={7} align="center">
               No rows selected
             </TableCell>
           </TableRow>
@@ -1024,6 +1040,21 @@ function FinalPayment() {
             Total Payable Amount:{" "}
             <span style={{ float: "right" }}>
               ₹{paymentData.totalPayable}
+            </span>
+          </Box>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Box
+            sx={{
+              border: "1px solid #A259FF",
+              borderRadius: "8px",
+              padding: "12px",
+              fontWeight: 600,
+            }}
+          >
+            Total Final Amount:{" "}
+            <span style={{ float: "right" }}>
+              ₹{totalFinalAmount}
             </span>
           </Box>
         </Grid>
