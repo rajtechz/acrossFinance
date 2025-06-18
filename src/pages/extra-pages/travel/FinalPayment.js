@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -55,7 +56,7 @@ function FinalPayment() {
 
   const [paymentData, setPaymentData] = useState({
     paymentDate: dayjs().format("YYYY-MM-DD"),
-    paymentMode: selectedRows.length > 1 ? "Full Payment" : "",
+    paymentMode: "",
     gst: "GST Hold",
     paymentMethod: "Both",
     partialAmount: 0,
@@ -71,7 +72,7 @@ function FinalPayment() {
   const handleOpenDialog = (row) => {
     setSelectedRow(row);
     const parseField = (field) =>
-      field ? field.split(",").map((s) => s.trim()) : [];
+      typeof field === "string" ? field.split(",").map((s) => s.trim()) : [];
     const cNames = parseField(row.customerName);
     const imeiList = parseField(row.imeiNo);
     const stypes = parseField(row.serviceType);
@@ -124,6 +125,12 @@ function FinalPayment() {
           totalServiceCharges: batch.totalServiceCharges || "0.00",
           gst: batch.gst || "0",
           tds: batch.tds || "0",
+          repairCharges: batch.repairCharges || "0.00",
+          chargesInclGST: batch.chargesInclGST || "0.00",
+          total: batch.total || "0.00",
+          grossAmount: batch.grossAmount || "0.00",
+          finalAmount: batch.finalAmount || "0.00",
+          invoiceAmount: batch.invoiceAmount || "0.00",
           selectedAaNos: batch.aaNo
             ? batch.aaNo.split(",").map((s) => s.trim()).slice(0, batch.caseCount || 0)
             : [],
@@ -141,10 +148,24 @@ function FinalPayment() {
     const totalPayable = filtered.reduce((acc, row) => {
       const repairCharges = Number(row.totalRepairCharges || 0);
       const serviceCharges = Number(row.totalServiceCharges || 0);
-      const baseAmount = repairCharges + serviceCharges;
       const gstRate = paymentData.gst === "GST Hold" ? 0 : Number(row.gst || 0);
       const tdsRate = Number(row.tds || 0);
-      const payable = baseAmount + baseAmount * (gstRate / 100) - baseAmount * (tdsRate / 100);
+      const gstAmount = serviceCharges * (gstRate / 100);
+      const tdsAmount = serviceCharges * (tdsRate / 100);
+      let payable;
+      switch (paymentData.paymentMethod) {
+        case "Total Repair Charge":
+          payable = repairCharges;
+          break;
+        case "Total Service Charge":
+          payable = serviceCharges + gstAmount - tdsAmount;
+          break;
+        case "Both":
+          payable = repairCharges + serviceCharges + gstAmount - tdsAmount;
+          break;
+        default:
+          payable = repairCharges + serviceCharges + gstAmount - tdsAmount;
+      }
       return acc + payable;
     }, 0);
 
@@ -272,23 +293,16 @@ function FinalPayment() {
     },
     {
       name: "Total Repair Charges",
-      width: "150px",
-      selector: (row) => row.totalRepairCharges || "200",
+      width: "200px",
+      selector: (row) => row.totalRepairCharges || "",
     },
     {
       name: "Total Service Charges",
+      width: "200px",
       selector: (row) => row.totalServiceCharges || "—",
     },
     {
-      name: "GST",
-      selector: (row) => `${row.gst}%` || "—",
-    },
-    {
-      name: "TDS",
-      selector: (row) => `${row.tds}%` || "—",
-    },
-    {
-      name: "Payable",
+      name: "Final Amount",
       selector: (row) => row.finalAmount || "—",
     },
     {
@@ -358,17 +372,23 @@ function FinalPayment() {
   };
 
   const sanitizeNumber = (value) => {
+    if (value === null || value === undefined || typeof value === "object") {
+      console.warn(`Invalid value type in sanitizeNumber: ${value}`);
+      return "0.00";
+    }
+
     if (
-      !value ||
       value === "" ||
-      value.trim() === "," ||
-      value.trim() === ", "
+      (typeof value === "string" &&
+        (value.trim() === "," || value.trim() === ", "))
     ) {
       return "0.00";
     }
-    if (typeof value === "number") {
+
+    if (typeof value === "number" && !isNaN(value)) {
       return value.toFixed(2);
     }
+
     if (typeof value === "string") {
       const values = value
         .split(",")
@@ -380,6 +400,8 @@ function FinalPayment() {
       const total = values.reduce((acc, val) => acc + parseFloat(val), 0);
       return total.toFixed(2);
     }
+
+    console.warn(`Unexpected value type in sanitizeNumber: ${typeof value}`, value);
     return "0.00";
   };
 
@@ -398,18 +420,27 @@ function FinalPayment() {
     ];
     const validatedRow = { ...row };
     numericFields.forEach((field) => {
+      const fieldValue = validatedRow[field];
       if (
-        validatedRow[field] === ", " ||
-        validatedRow[field] === "" ||
-        validatedRow[field] === null ||
-        validatedRow[field] === undefined
+        fieldValue === ", " ||
+        fieldValue === "" ||
+        fieldValue === null ||
+        fieldValue === undefined
       ) {
         console.warn(
-          `Invalid value for ${field} in row ${row.batchNo}: ${validatedRow[field]}`
+          `Invalid value for ${field} in row ${row.batchNo}: ${fieldValue}`
         );
         validatedRow[field] = "0.00";
       } else {
-        validatedRow[field] = sanitizeNumber(validatedRow[field]);
+        try {
+          validatedRow[field] = sanitizeNumber(fieldValue);
+        } catch (error) {
+          console.error(
+            `Error sanitizing ${field} in row ${row.batchNo}: ${fieldValue}`,
+            error
+          );
+          validatedRow[field] = "0.00";
+        }
       }
     });
     return validatedRow;
@@ -427,14 +458,31 @@ function FinalPayment() {
       const selectedDate = dayjs(paymentData.paymentDate).startOf("day");
       const today = dayjs().startOf("day");
 
+      console.log("Selected Data for Submission:", selectedData);
+
       if (selectedDate.isAfter(today)) {
         const validatedData = selectedData.map(validateRowData);
         for (const row of validatedData) {
           const repairCharges = Number(row.totalRepairCharges || 0);
           const serviceCharges = Number(row.totalServiceCharges || 0);
-          const baseAmount = repairCharges + serviceCharges;
           const gstRate = paymentData.gst === "GST Hold" ? 0 : Number(row.gst || 0);
           const tdsRate = Number(row.tds || 2);
+          const gstAmount = serviceCharges * (gstRate / 100);
+          const tdsAmount = serviceCharges * (tdsRate / 100);
+          let finalAmount;
+          switch (paymentData.paymentMethod) {
+            case "Total Repair Charge":
+              finalAmount = repairCharges;
+              break;
+            case "Total Service Charge":
+              finalAmount = serviceCharges + gstAmount - tdsAmount;
+              break;
+            case "Both":
+              finalAmount = repairCharges + serviceCharges + gstAmount - tdsAmount;
+              break;
+            default:
+              finalAmount = repairCharges + serviceCharges + gstAmount - tdsAmount;
+          }
 
           const payload = {
             scheduledId: row.batchNo || "N/A",
@@ -455,11 +503,7 @@ function FinalPayment() {
             totalRepairCharges: sanitizeNumber(row.totalRepairCharges),
             totalServiceCharges: sanitizeNumber(row.totalServiceCharges),
             grossAmount: sanitizeNumber(row.grossAmount),
-            finalAmount: sanitizeNumber(
-              baseAmount +
-                baseAmount * (gstRate / 100) -
-                baseAmount * (tdsRate / 100)
-            ),
+            finalAmount: sanitizeNumber(finalAmount),
             gst: gstRate.toString(),
             tds: tdsRate.toString(),
             invoiceNo: row.invoiceNo || "",
@@ -474,11 +518,7 @@ function FinalPayment() {
             paymentType: paymentData.paymentMode || "",
             gstStatus: paymentData.gst || "",
             paymentMode: paymentData.paymentMethod || "",
-            totalAmount: sanitizeNumber(
-              baseAmount +
-                baseAmount * (gstRate / 100) -
-                baseAmount * (tdsRate / 100)
-            ),
+            totalAmount: sanitizeNumber(finalAmount),
             totalPartialPaidAmount: paymentData.partialAmount,
             partialPaidAmount: sanitizeNumber(row.partialPaid),
           };
@@ -510,9 +550,24 @@ function FinalPayment() {
         for (const row of validatedData) {
           const repairCharges = Number(row.totalRepairCharges || 0);
           const serviceCharges = Number(row.totalServiceCharges || 0);
-          const baseAmount = repairCharges + serviceCharges;
           const gstRate = paymentData.gst === "GST Hold" ? 0 : Number(row.gst || 0);
           const tdsRate = Number(row.tds || 0);
+          const gstAmount = serviceCharges * (gstRate / 100);
+          const tdsAmount = serviceCharges * (tdsRate / 100);
+          let finalAmount;
+          switch (paymentData.paymentMethod) {
+            case "Total Repair Charge":
+              finalAmount = repairCharges;
+              break;
+            case "Total Service Charge":
+              finalAmount = serviceCharges + gstAmount - tdsAmount;
+              break;
+            case "Both":
+              finalAmount = repairCharges + serviceCharges + gstAmount - tdsAmount;
+              break;
+            default:
+              finalAmount = repairCharges + serviceCharges + gstAmount - tdsAmount;
+          }
 
           const payload = {
             scheduledId: row.scheduledId || row.batchNo || "N/A",
@@ -534,11 +589,7 @@ function FinalPayment() {
             totalRepairCharges: sanitizeNumber(row.totalRepairCharges),
             totalServiceCharges: sanitizeNumber(row.totalServiceCharges),
             grossAmount: sanitizeNumber(row.grossAmount),
-            finalAmount: sanitizeNumber(
-              baseAmount +
-                baseAmount * (gstRate / 100) -
-                baseAmount * (tdsRate / 100)
-            ),
+            finalAmount: sanitizeNumber(finalAmount),
             gst: gstRate.toString(),
             tds: tdsRate.toString(),
             invoiceNo: row.invoiceNo || "",
@@ -552,12 +603,8 @@ function FinalPayment() {
               paymentData.paymentDate || dayjs().format("YYYY-MM-DD"),
             paymentType: paymentData.paymentMode || "Online",
             gstStatus: paymentData.gst || "",
-            paymentMode: paymentData.paymentMethod || "Reimbursement",
-            totalAmount: sanitizeNumber(
-              baseAmount +
-                baseAmount * (gstRate / 100) -
-                baseAmount * (tdsRate / 100)
-            ),
+            paymentMode: paymentData.paymentMethod || "Total Repair Charge",
+            totalAmount: sanitizeNumber(finalAmount),
             totalPartialPaidAmount: paymentData.partialAmount,
           };
 
@@ -604,7 +651,29 @@ function FinalPayment() {
 
   const totalPayableAmount = selectedRows
     .filter((row) => row.selected)
-    .reduce((acc, curr) => acc + Number(curr.payableAmount || 0), 0);
+    .reduce((acc, curr) => {
+      const repairCharges = Number(curr.totalRepairCharges || 0);
+      const serviceCharges = Number(curr.totalServiceCharges || 0);
+      const gstRate = paymentData.gst === "GST Hold" ? 0 : Number(curr.gst || 0);
+      const tdsRate = Number(curr.tds || 0);
+      const gstAmount = serviceCharges * (gstRate / 100);
+      const tdsAmount = serviceCharges * (tdsRate / 100);
+      let payable;
+      switch (paymentData.paymentMethod) {
+        case "Total Repair Charge":
+          payable = repairCharges;
+          break;
+        case "Total Service Charge":
+          payable = serviceCharges + gstAmount - tdsAmount;
+          break;
+        case "Both":
+          payable = repairCharges + serviceCharges + gstAmount - tdsAmount;
+          break;
+        default:
+          payable = repairCharges + serviceCharges + gstAmount - tdsAmount;
+      }
+      return acc + payable;
+    }, 0);
 
   const PaymentTable = () => (
     <Table sx={{ minWidth: 650, border: "1px solid #ddd" }}>
@@ -620,13 +689,16 @@ function FinalPayment() {
             Total Service Charge
           </TableCell>
           <TableCell sx={{ fontWeight: "bold", color: "#333" }}>
-            GST
+            GST Amount
           </TableCell>
           <TableCell sx={{ fontWeight: "bold", color: "#333" }}>
-            TDS
+            TDS Amount
           </TableCell>
           <TableCell sx={{ fontWeight: "bold", color: "#333" }}>
             Payable
+          </TableCell>
+          <TableCell sx={{ fontWeight: "bold", color: "#333" }}>
+            Final Amount
           </TableCell>
         </TableRow>
       </TableHead>
@@ -636,13 +708,35 @@ function FinalPayment() {
           .map((row, index) => {
             const repairCharges = Number(row.totalRepairCharges || 0);
             const serviceCharges = Number(row.totalServiceCharges || 0);
-            const baseAmount = repairCharges + serviceCharges;
             const gstRate = paymentData.gst === "GST Hold" ? 0 : Number(row.gst || 0);
             const tdsRate = Number(row.tds || 0);
-            const payable =
-              baseAmount +
-              baseAmount * (gstRate / 100) -
-              baseAmount * (tdsRate / 100);
+            const gstAmount = serviceCharges * (gstRate / 100);
+            const tdsAmount = serviceCharges * (tdsRate / 100);
+            let payable;
+            let displayRepairCharges = "0.00";
+            let displayServiceCharges = "0.00";
+
+            switch (paymentData.paymentMethod) {
+              case "Total Repair Charge":
+                payable = repairCharges;
+                displayRepairCharges = repairCharges.toFixed(2);
+                displayServiceCharges = "0.00";
+                break;
+              case "Total Service Charge":
+                payable = serviceCharges + gstAmount - tdsAmount;
+                displayRepairCharges = "0.00";
+                displayServiceCharges = serviceCharges.toFixed(2);
+                break;
+              case "Both":
+                payable = repairCharges + serviceCharges + gstAmount - tdsAmount;
+                displayRepairCharges = repairCharges.toFixed(2);
+                displayServiceCharges = serviceCharges.toFixed(2);
+                break;
+              default:
+                payable = repairCharges + serviceCharges + gstAmount - tdsAmount;
+                displayRepairCharges = repairCharges.toFixed(2);
+                displayServiceCharges = serviceCharges.toFixed(2);
+            }
 
             return (
               <TableRow
@@ -651,16 +745,19 @@ function FinalPayment() {
               >
                 <TableCell>{row.caseCount || "—"}</TableCell>
                 <TableCell>
-                  {repairCharges > 0 ? repairCharges.toFixed(2) : "—"}
+                  {displayRepairCharges !== "0.00" ? displayRepairCharges : "0.00"}
                 </TableCell>
                 <TableCell>
-                  {serviceCharges > 0 ? serviceCharges.toFixed(2) : "—"}
+                  {displayServiceCharges !== "0.00" ? displayServiceCharges : "0.00"}
                 </TableCell>
-                <TableCell>{gstRate > 0 ? `${gstRate}%` : "0%"}</TableCell>
                 <TableCell>
-                  {tdsRate > 0 ? `${tdsRate}%` : "0%"}
+                  {gstAmount > 0 ? gstAmount.toFixed(2) : "0.00"}
+                </TableCell>
+                <TableCell>
+                  {tdsAmount > 0 ? tdsAmount.toFixed(2) : "0.00"}
                 </TableCell>
                 <TableCell>{payable > 0 ? payable.toFixed(2) : "—"}</TableCell>
+                 <TableCell>{row.finalAmount || "—"}</TableCell>
               </TableRow>
             );
           })}
@@ -689,10 +786,10 @@ function FinalPayment() {
             Total Service Charge
           </TableCell>
           <TableCell sx={{ fontWeight: "bold", color: "#333" }}>
-            GST
+            GST Amount
           </TableCell>
           <TableCell sx={{ fontWeight: "bold", color: "#333" }}>
-            TDS
+            TDS Amount
           </TableCell>
           <TableCell sx={{ fontWeight: "bold", color: "#333" }}>
             Payable
@@ -705,13 +802,35 @@ function FinalPayment() {
           .map((row, index) => {
             const repairCharges = Number(row.totalRepairCharges || 0);
             const serviceCharges = Number(row.totalServiceCharges || 0);
-            const baseAmount = repairCharges + serviceCharges;
             const gstRate = paymentData.gst === "GST Hold" ? 0 : Number(row.gst || 0);
             const tdsRate = Number(row.tds || 0);
-            const payable =
-              baseAmount +
-              baseAmount * (gstRate / 100) -
-              baseAmount * (tdsRate / 100);
+            const gstAmount = serviceCharges * (gstRate / 100);
+            const tdsAmount = serviceCharges * (tdsRate / 100);
+            let payable;
+            let displayRepairCharges = "0.00";
+            let displayServiceCharges = "0.00";
+
+            switch (paymentData.paymentMethod) {
+              case "Total Repair Charge":
+                payable = repairCharges;
+                displayRepairCharges = repairCharges.toFixed(2);
+                displayServiceCharges = "0.00";
+                break;
+              case "Total Service Charge":
+                payable = serviceCharges + gstAmount - tdsAmount;
+                displayRepairCharges = "0.00";
+                displayServiceCharges = serviceCharges.toFixed(2);
+                break;
+              case "Both":
+                payable = repairCharges + serviceCharges + gstAmount - tdsAmount;
+                displayRepairCharges = repairCharges.toFixed(2);
+                displayServiceCharges = serviceCharges.toFixed(2);
+                break;
+              default:
+                payable = repairCharges + serviceCharges + gstAmount - tdsAmount;
+                displayRepairCharges = repairCharges.toFixed(2);
+                displayServiceCharges = serviceCharges.toFixed(2);
+            }
 
             return (
               <TableRow
@@ -733,14 +852,16 @@ function FinalPayment() {
                   />
                 </TableCell>
                 <TableCell>
-                  {repairCharges > 0 ? repairCharges.toFixed(2) : "—"}
+                  {displayRepairCharges !== "0.00" ? displayRepairCharges : "0.00"}
                 </TableCell>
                 <TableCell>
-                  {serviceCharges > 0 ? serviceCharges.toFixed(2) : "—"}
+                  {displayServiceCharges !== "0.00" ? displayServiceCharges : "0.00"}
                 </TableCell>
-                <TableCell>{gstRate > 0 ? `${gstRate}%` : "0%"}</TableCell>
                 <TableCell>
-                  {tdsRate > 0 ? `${tdsRate}%` : "0%"}
+                  {gstAmount > 0 ? gstAmount.toFixed(2) : "0.00"}
+                </TableCell>
+                <TableCell>
+                  {tdsAmount > 0 ? tdsAmount.toFixed(2) : "0.00"}
                 </TableCell>
                 <TableCell>{payable > 0 ? payable.toFixed(2) : "—"}</TableCell>
               </TableRow>
@@ -866,9 +987,9 @@ function FinalPayment() {
               onChange={handleInputChange}
               label="Payment Method"
             >
-              <MenuItem value="Reimbursement">Reimbursement</MenuItem>
+              <MenuItem value="Total Repair Charge">Total Repair Charge</MenuItem>
+              <MenuItem value="Total Service Charge">Total Service Charge</MenuItem>
               <MenuItem value="Both">Both</MenuItem>
-              <MenuItem value="Expense">Expense</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -1003,7 +1124,6 @@ function FinalPayment() {
 }
 
 export default FinalPayment;
-
 
 const customStyles = {
   headRow: {
